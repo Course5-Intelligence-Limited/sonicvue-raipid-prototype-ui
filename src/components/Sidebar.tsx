@@ -47,6 +47,11 @@ import React, { useState } from 'react';
 import { Box, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { CloudUploadOutlined, InsertChartOutlined, ContactSupportOutlined } from '@mui/icons-material';
+import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
+import AllInboxOutlinedIcon from '@mui/icons-material/AllInboxOutlined';
+import MenuOpenOutlinedIcon from '@mui/icons-material/MenuOpenOutlined';
+import ShareLocationOutlinedIcon from '@mui/icons-material/ShareLocationOutlined';
+import TravelExploreOutlinedIcon from "@mui/icons-material/TravelExploreOutlined"
 
 const Sidebar: React.FC = () => {
   const [expanded, setExpanded] = useState(false);
@@ -67,12 +72,12 @@ const Sidebar: React.FC = () => {
       onMouseLeave={handleMouseLeave}
     >
       <List>
-        <ListItemButton sx={{ height: '50px' }} component={Link} to="/">
+        <ListItemButton sx={{ height: '50px' }} component={Link} to="/home">
           <ListItemIcon sx={{ fontSize: '20px', minWidth: '30px', color: 'white' }}>
-            <CloudUploadOutlined sx={{ fontSize: '20px' }} />
+            <MenuOpenOutlinedIcon sx={{ fontSize: '20px' }} />
           </ListItemIcon>
           {expanded && (
-            <ListItemText sx={{minWidth:'150px'}} primary="Upload File" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
+            <ListItemText sx={{ minWidth: '150px' }} primary="Home" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
           )}
         </ListItemButton>
         <ListItemButton sx={{ height: '50px' }} component={Link} to="/dashboard">
@@ -80,15 +85,39 @@ const Sidebar: React.FC = () => {
             <InsertChartOutlined sx={{ fontSize: '20px' }} />
           </ListItemIcon>
           {expanded && (
-            <ListItemText sx={{minWidth:'150px'}} primary="Call Analysis" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
+            <ListItemText sx={{ minWidth: '150px' }} primary="Call Analysis" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
           )}
         </ListItemButton>
-        <ListItemButton sx={{ height: '50px' }} component={Link} to="/chatbot">
+        <ListItemButton sx={{ height: '50px' }} component={Link} to="/agent">
           <ListItemIcon sx={{ fontSize: '20px', minWidth: '30px', color: 'white' }}>
-            <ContactSupportOutlined sx={{ fontSize: '20px' }} />
+            <SupportAgentOutlinedIcon sx={{ fontSize: '20px' }} />
           </ListItemIcon>
           {expanded && (
-            <ListItemText sx={{minWidth:'150px'}} primary="Support" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
+            <ListItemText sx={{ minWidth: '150px' }} primary="Agent’s Performance" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
+          )}
+        </ListItemButton>
+        <ListItemButton sx={{ height: '50px' }} component={Link} to="/parts">
+          <ListItemIcon sx={{ fontSize: '20px', minWidth: '30px', color: 'white' }}>
+            <AllInboxOutlinedIcon sx={{ fontSize: '20px' }} />
+          </ListItemIcon>
+          {expanded && (
+            <ListItemText sx={{ minWidth: '150px' }} primary="Parts Dispatched" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
+          )}
+        </ListItemButton>
+        <ListItemButton sx={{ height: '50px' }} component={Link} to="/dashboard">
+          <ListItemIcon sx={{ fontSize: '20px', minWidth: '30px', color: 'white' }}>
+            <ShareLocationOutlinedIcon sx={{ fontSize: '20px' }} />
+          </ListItemIcon>
+          {expanded && (
+            <ListItemText sx={{ minWidth: '150px' }} primary="Field Visit" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
+          )}
+        </ListItemButton>
+        <ListItemButton sx={{ height: '50px' }} component={Link} to="/dashboard">
+          <ListItemIcon sx={{ fontSize: '20px', minWidth: '30px', color: 'white' }}>
+            <TravelExploreOutlinedIcon sx={{ fontSize: '20px' }} />
+          </ListItemIcon>
+          {expanded && (
+            <ListItemText sx={{ minWidth: '150px' }} primary="CS Portal" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
           )}
         </ListItemButton>
       </List>

@@ -6,14 +6,15 @@ import Footer from './Footer';
 
 interface LayoutProps {
   children: React.ReactNode;
+  onLogout: () => void; // Add onLogout prop here
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <Header />
+      <Header onLogout={onLogout} /> {/* Pass onLogout to Header */}
       <Box sx={{ display: 'flex', flex: 1 }}>
-        <Box> 
+        <Box>
           <Sidebar />
         </Box>
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
