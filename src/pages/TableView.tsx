@@ -156,7 +156,7 @@ const TableData: React.FC = () => {
 
     const fetchDashboardData = async () => {
         try {
-            const response = await axios.get('http://localhost:8080/dashboard-data', {
+            const response = await axios.get('http://172.203.229.218:8080/dashboard-data', {
                 params: {
                     modality: modality === 'All' ? undefined : modality,
                     complexity: complexity === 'All' ? undefined : complexity,
@@ -180,11 +180,11 @@ const TableData: React.FC = () => {
 
     const fetchTableData = async () => {
         try {
-            const response = await axios.get('http://localhost:8080/table-data');
+            const response = await axios.get('http://172.203.229.218:8080/table-data');
             console.log('Fetched table data:', response.data);
             
             // Fetch transcripts for each file
-            const transcriptsResponse = await axios.get('http://localhost:8080/generate-transcripts', {
+            const transcriptsResponse = await axios.get('http://172.203.229.218:8080/generate-transcripts', {
                 params: { files: response.data.map((row: any) => row.filename).join(',') }
             });
             console.log('Fetched transcripts:', transcriptsResponse.data);
