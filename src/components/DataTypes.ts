@@ -49,7 +49,6 @@ export interface DashboardData {
     phone_number: boolean;
     email_address: boolean;
     call_quality: string;
-    case_type: string;
     resolution_confirmation: boolean;
     hold: boolean;
     hold_satisfaction: string;
@@ -61,10 +60,8 @@ export interface DashboardData {
     issue_type: string;
     status_query: boolean;
     call_type: string;
-    replacement_required: boolean;
     part_request: boolean;
     parts_dispatch: boolean;
-    refund_required: boolean;
     field_service: boolean;
     digital_service: boolean;
     transcript?: string;

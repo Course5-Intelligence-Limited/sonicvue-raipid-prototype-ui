@@ -156,7 +156,7 @@ const TableData: React.FC = () => {
 
     const fetchDashboardData = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/dashboard-data', {
+            const response = await axios.get('http://localhost:8080/dashboard-data', {
                 params: {
                     modality: modality === 'All' ? undefined : modality,
                     complexity: complexity === 'All' ? undefined : complexity,
@@ -180,11 +180,11 @@ const TableData: React.FC = () => {
 
     const fetchTableData = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/table-data');
+            const response = await axios.get('http://localhost:8080/table-data');
             console.log('Fetched table data:', response.data);
             
             // Fetch transcripts for each file
-            const transcriptsResponse = await axios.get('http://localhost:8000/generate_transcripts', {
+            const transcriptsResponse = await axios.get('http://localhost:8080/generate-transcripts', {
                 params: { files: response.data.map((row: any) => row.filename).join(',') }
             });
             console.log('Fetched transcripts:', transcriptsResponse.data);
@@ -283,7 +283,6 @@ const TableData: React.FC = () => {
         { key: 'phone_number', label: 'Phone Number', width: '10%', backgroundColor: '#90a4ae', color: '#ffffff' },
         { key: 'email_address', label: 'Email Address', width: '15%', backgroundColor: '#7C8F98', color: '#ffffff' },
         { key: 'call_quality', label: 'Call Quality', width: '8%', backgroundColor: '#90a4ae', color: '#ffffff' },
-        { key: 'case_type', label: 'Case Type', width: '8%', backgroundColor: '#7C8F98', color: '#ffffff' },
         { key: 'resolution_confirmation', label: 'Resolution Confirmation', width: '10%', backgroundColor: '#90a4ae', color: '#ffffff' },
         { key: 'hold', label: 'Hold', width: '5%', backgroundColor: '#7C8F98', color: '#ffffff' },
         { key: 'hold_satisfaction', label: 'Hold Satisfaction', width: '10%', backgroundColor: '#90a4ae', color: '#ffffff' },
@@ -295,10 +294,8 @@ const TableData: React.FC = () => {
         { key: 'issue_type', label: 'Issue Type', width: '10%', backgroundColor: '#90a4ae', color: '#ffffff' },
         { key: 'status_query', label: 'Status Query', width: '10%', backgroundColor: '#7C8F98', color: '#ffffff' },
         { key: 'call_type', label: 'Call Type', width: '10%', backgroundColor: '#90a4ae', color: '#ffffff' },
-        { key: 'replacement_required', label: 'Replacement Required', width: '10%', backgroundColor: '#7C8F98', color: '#ffffff' },
         { key: 'part_request', label: 'Part Request', width: '10%', backgroundColor: '#90a4ae', color: '#ffffff' },
         { key: 'parts_dispatch', label: 'Parts Dispatch', width: '10%', backgroundColor: '#7C8F98', color: '#ffffff' },
-        { key: 'refund_required', label: 'Refund Required', width: '10%', backgroundColor: '#90a4ae', color: '#ffffff' },
         { key: 'field_service', label: 'Field Service', width: '10%', backgroundColor: '#7C8F98', color: '#ffffff' },
         { key: 'digital_service', label: 'Digital Service', width: '10%', backgroundColor: '#90a4ae', color: '#ffffff' },
         { key: 'transcript', label: 'Transcript', width: '5%', backgroundColor: '#7C8F98', color: '#ffffff' },

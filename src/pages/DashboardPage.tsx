@@ -24,7 +24,6 @@ interface CallData {
   phone_number: string;
   email_address: string;
   call_quality: string;
-  case_type: string;
   resolution_confirmation: string;
   hold: string;
   hold_satisfaction: string;
@@ -36,10 +35,8 @@ interface CallData {
   issue_type: string;
   status_query: string;
   call_type: string;
-  replacement_required: string;
   part_request: string;
   parts_dispatch: string;
-  refund_required: string;
   field_service: string;
   digital_service: string;
 }
