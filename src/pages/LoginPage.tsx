@@ -153,27 +153,27 @@ const LoginPage: React.FC = () => {
             <SignInButton type="submit" fullWidth variant="contained">
               Sign in
             </SignInButton>
-            <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
+            {/* <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
               <Box sx={{ flex: 1, height: '1px', backgroundColor: '#E0E0E0' }} />
               <Typography variant="body2" sx={{ mx: 2 }}>
                 Or
               </Typography>
               <Box sx={{ flex: 1, height: '1px', backgroundColor: '#E0E0E0' }} />
-            </Box>
-            <MicrosoftButton fullWidth variant="outlined" startIcon={
+            </Box> */}
+            {/* <MicrosoftButton fullWidth variant="outlined" startIcon={
               <img src={microsoftLogo} alt="Microsoft logo" style={{ width: '20px', height: '20px' }} />
             }>
               Sign in with Microsoft
-            </MicrosoftButton>
+            </MicrosoftButton> */}
           </Box>
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
+          {/* <Box sx={{ mt: 3, textAlign: 'center' }}>
             <Typography variant="body2">
               Don't you have an account?{' '}
               <Typography component="span" color="#6800E0" sx={{ cursor: 'pointer' }}>
                 Sign up
               </Typography>
             </Typography>
-          </Box>
+          </Box> */}
         </Box>
       </FormSection>
       <ImageSection sx={{padding:'20px'}}>

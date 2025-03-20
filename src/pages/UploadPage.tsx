@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useCallback, useRef, useEffect } from "react"
 import JSZip from "jszip"
 import { Link, useLocation } from "react-router-dom"
@@ -39,10 +41,9 @@ import {
 } from "@mui/icons-material"
 import { useDropzone } from "react-dropzone"
 import axios from "axios"
-import DialogContentComponent from "../components/DialogContent"
 import { useUpload } from "../context/FileContext"
 
-interface FileUpload {
+interface FileUploadProps {
   file: File
   progress: number
   status: "Ready" | "uploading" | "success" | "error" | "processing"
@@ -84,6 +85,7 @@ export default function UploadPage() {
   }, [files, transcripts, filesUploaded, location.pathname])
 
   const showTranscript = (transcript: string) => {
+    console.log("Showing transcript:", transcript)
     setSelectedTranscript(transcript)
     setOpenTranscriptDialog(true)
   }
@@ -467,7 +469,27 @@ export default function UploadPage() {
               </IconButton>
             </DialogTitle>
             <DialogContent dividers>
-              <DialogContentComponent selectedTranscript={selectedTranscript} />
+              {selectedTranscript ? (
+                <Typography
+                  variant="body1"
+                  component="div"
+                  sx={{
+                    whiteSpace: "pre-wrap",
+                    fontFamily: "monospace",
+                    fontSize: "14px",
+                    lineHeight: 1.6,
+                    maxHeight: "60vh",
+                    overflow: "auto",
+                    padding: 1,
+                  }}
+                >
+                  {selectedTranscript}
+                </Typography>
+              ) : (
+                <Typography variant="body1" color="text.secondary" align="center">
+                  No transcript available for this call.
+                </Typography>
+              )}
             </DialogContent>
             <DialogActions>
               <Button
@@ -478,8 +500,9 @@ export default function UploadPage() {
                     downloadTranscriptAsPdf2(transcript.transcript || "", transcript.filename)
                   }
                 }}
+                disabled={!selectedTranscript}
               >
-                <Download sx={{ color: "white", height: "16px" }} />
+                <Download sx={{ color: "white", height: "16px", mr: 1 }} />
                 Download
               </Button>
               <Button onClick={() => setOpenTranscriptDialog(false)}>Close</Button>

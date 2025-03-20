@@ -36,7 +36,6 @@ import PhonePausedOutlinedIcon from "@mui/icons-material/PhonePausedOutlined"
 import MoveUpOutlinedIcon from "@mui/icons-material/MoveUpOutlined"
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined"
 import TravelExploreOutlinedIcon from "@mui/icons-material/TravelExploreOutlined"
-import DialogContentComponent from "../components/DialogContent"
 
 const COLORS = ["#5ED061", "#EA4D4D", "#00308F", "#FF8042"]
 const colors = ["#1877F2", "#3457D5", "#00308F"]
@@ -265,6 +264,7 @@ const Dashboard: React.FC = () => {
   }
 
   const handleOpenTranscript = (transcript: string | undefined, status: string | undefined, filename: string) => {
+    console.log("Opening transcript:", transcript ? transcript.substring(0, 100) + "..." : "No transcript")
     if (transcript) {
       setSelectedTranscript(transcript)
       setSelectedFilename(filename)
@@ -341,7 +341,7 @@ const Dashboard: React.FC = () => {
     { key: "parts_dispatch", label: "Parts Dispatch", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "field_service", label: "Field Service", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "digital_service", label: "Digital Service", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "transcript", label: "Transcript", width: "5%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    // { key: "transcript", label: "Transcript", width: "5%", backgroundColor: "#7C8F98", color: "#ffffff" },
   ]
 
   const renderKPI = (title: string, value: number, unit = "", icon: React.ReactNode) => (
@@ -475,7 +475,7 @@ const Dashboard: React.FC = () => {
     const callHoldPercentage =
       (data.reduce((sum, row) => sum + (Number.parseInt(row.hold_time?.toString() || "0") || 0), 0) /
         (data.length * 60)) *
-      100 || 0
+        100 || 0
     const escalatedCalls = (data.filter((row) => row.escalation === "Yes").length / data.length) * 100 || 0
     const resolutionConfirmation =
       (data.filter((row) => row.resolution_confirmation === "Yes").length / data.length) * 100 || 0
@@ -580,13 +580,13 @@ const Dashboard: React.FC = () => {
 
   const rootCauseAnalysis = filteredDashboardData?.root_cause_analysis
     ? [
-      {
-        category: "Root Cause Analysis",
-        HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
-        ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
-        RouteTime: filteredDashboardData.root_cause_analysis.route_time,
-      },
-    ]
+        {
+          category: "Root Cause Analysis",
+          HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
+          ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
+          RouteTime: filteredDashboardData.root_cause_analysis.route_time,
+        },
+      ]
     : []
 
   return (
@@ -822,6 +822,8 @@ const Dashboard: React.FC = () => {
                         >
                           <TextSnippet color={row.transcript ? "primary" : "disabled"} />
                         </IconButton>
+                      ) : column.key === "hold_time" || column.key === "route_time" ? (
+                        String(row[column.key] || "0")
                       ) : (
                         String(row[column.key] || "")
                       )}
@@ -850,7 +852,27 @@ const Dashboard: React.FC = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <DialogContentComponent selectedTranscript={selectedTranscript} />
+          {selectedTranscript ? (
+            <Typography
+              variant="body1"
+              component="div"
+              sx={{
+                whiteSpace: "pre-wrap",
+                fontFamily: "monospace",
+                fontSize: "14px",
+                lineHeight: 1.6,
+                maxHeight: "60vh",
+                overflow: "auto",
+                padding: 1,
+              }}
+            >
+              {selectedTranscript}
+            </Typography>
+          ) : (
+            <Typography variant="body1" color="text.secondary" align="center">
+              No transcript available for this call.
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button
@@ -870,7 +892,7 @@ const Dashboard: React.FC = () => {
               },
             }}
           >
-            <GetApp sx={{ color: "white", height: "16px", marginRight: "8px" }} />
+            <GetApp sx={{ color: "white", height: "16px", mr: 1 }} />
             Download
           </Button>
           <Button onClick={() => setOpenTranscriptDialog(false)}>Close</Button>
