@@ -65,7 +65,7 @@ export default function UploadPage() {
   const [selectedTranscript, setSelectedTranscript] = useState("")
   const [loadingTranscripts, setLoadingTranscripts] = useState(false)
   const [open, setOpen] = useState(false)
-  const [alert, setAlert] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+  const [alert, setAlert] = useState<{ show: boolean; message: string; type: "success" | "error" | "info" }>({
     show: false,
     message: "",
     type: "success",
@@ -90,6 +90,12 @@ export default function UploadPage() {
     setOpenTranscriptDialog(true)
   }
 
+  // Check if File System Access API is supported
+  const isFileSystemAccessSupported = () => {
+    return 'showSaveFilePicker' in window;
+  }
+
+  // Updated function to download all transcripts as a zip file
   const downloadAllTranscriptsAsZip = async (transcripts: TranscriptResponse[]) => {
     const zip = new JSZip()
 
@@ -101,45 +107,126 @@ export default function UploadPage() {
 
     try {
       const zipBlob = await zip.generateAsync({ type: "blob" })
+      
+      // Try to use File System Access API first
+      if (isFileSystemAccessSupported()) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: "transcripts.zip",
+            types: [
+              {
+                description: "ZIP Files",
+                accept: { "application/zip": [".zip"] },
+              },
+            ],
+          })
 
-      if ("showSaveFilePicker" in window) {
-        const handle = await (window as any).showSaveFilePicker({
-          suggestedName: "transcripts.zip",
-          types: [
-            {
-              description: "ZIP Files",
-              accept: { "application/zip": [".zip"] },
-            },
-          ],
-        })
-
-        const writable = await handle.createWritable()
-        await writable.write(zipBlob)
-        await writable.close()
+          const writable = await handle.createWritable()
+          await writable.write(zipBlob)
+          await writable.close()
+          
+          setAlert({
+            show: true,
+            message: "Transcripts saved successfully!",
+            type: "success",
+          })
+          return
+        } catch (err) {
+          // User might have cancelled the save dialog
+          console.log("File System Access API failed, falling back to standard download", err)
+        }
       }
+      
+      // Fallback to standard download if File System Access API is not supported or failed
+      const url = URL.createObjectURL(zipBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = "transcripts.zip"
+      document.body.appendChild(a)
+      a.click()
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }, 100)
+      
+      setAlert({
+        show: true,
+        message: "Transcripts downloaded to your default download folder",
+        type: "info",
+      })
     } catch (error) {
       console.error("Failed to generate or download ZIP file:", error)
+      setAlert({
+        show: true,
+        message: "Failed to download transcripts. Please try again.",
+        type: "error",
+      })
     }
   }
 
+  // Updated function to download a single transcript
   const downloadTranscriptAsPdf2 = async (transcript: string, filename: string) => {
-    if ("showSaveFilePicker" in window) {
-      try {
-        const handle = await (window as any).showSaveFilePicker({
-          suggestedName: `${filename}.txt`,
-          types: [
-            {
-              description: "Text File",
-              accept: { "text/plain": [".txt"] },
-            },
-          ],
-        })
-        const writable = await handle.createWritable()
-        await writable.write(transcript)
-        await writable.close()
-      } catch (err) {
-        console.error("Save operation was canceled or failed", err)
+    try {
+      // Create a Blob from the transcript text
+      const blob = new Blob([transcript], { type: 'text/plain' })
+      
+      // Try to use File System Access API first
+      if (isFileSystemAccessSupported()) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: `${filename}.txt`,
+            types: [
+              {
+                description: "Text Files",
+                accept: { "text/plain": [".txt"] },
+              },
+            ],
+          })
+
+          const writable = await handle.createWritable()
+          await writable.write(blob)
+          await writable.close()
+          
+          setAlert({
+            show: true,
+            message: "Transcript saved successfully!",
+            type: "success",
+          })
+          return
+        } catch (err) {
+          // User might have cancelled the save dialog
+          console.log("File System Access API failed, falling back to standard download", err)
+        }
       }
+      
+      // Fallback to standard download if File System Access API is not supported or failed
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${filename}.txt`
+      document.body.appendChild(a)
+      a.click()
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }, 100)
+      
+      setAlert({
+        show: true,
+        message: "Transcript downloaded to your default download folder",
+        type: "info",
+      })
+    } catch (err) {
+      console.error("Download operation failed", err)
+      setAlert({
+        show: true,
+        message: "Failed to download transcript. Please try again.",
+        type: "error",
+      })
     }
   }
 
@@ -651,4 +738,3 @@ export default function UploadPage() {
     </Box>
   )
 }
-
