@@ -338,15 +338,51 @@ const Dashboard: React.FC = () => {
     { key: "call_time", label: "Call Time (Sec)", width: "8%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "hold_time", label: "Hold Time (Sec)", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
     { key: "route_time", label: "Route Time (Sec)", width: "8%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "resolution_time", label: "Resolution Time (Sec)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    {
+      key: "resolution_time",
+      label: "Resolution Time (Sec)",
+      width: "10%",
+      backgroundColor: "#90a4ae",
+      color: "#ffffff",
+    },
     { key: "greeting", label: "Greeting (Y/N)", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "phone_number", label: "Phone Number Collected (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "email_address", label: "Email Address Collected (Y/N)", width: "15%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "call_quality", label: "Call Quality", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "resolution_confirmation", label: "Resolution Confirmation (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    {
+      key: "phone_number",
+      label: "Phone Number Collected (Y/N)",
+      width: "10%",
+      backgroundColor: "#90a4ae",
+      color: "#ffffff",
+    },
+    {
+      key: "email_address",
+      label: "Email Address Collected (Y/N)",
+      width: "15%",
+      backgroundColor: "#7C8F98",
+      color: "#ffffff",
+    },
+    { key: "call_quality", label: "Call Quality (%)", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    {
+      key: "resolution_confirmation",
+      label: "Resolution Confirmation (Y/N)",
+      width: "10%",
+      backgroundColor: "#90a4ae",
+      color: "#ffffff",
+    },
     { key: "hold", label: "Hold", width: "5%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "hold_satisfaction", label: "Hold Satisfaction", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "multiple_agents", label: "Multiple Agents (Y/N)", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    {
+      key: "hold_satisfaction",
+      label: "Hold Satisfaction",
+      width: "10%",
+      backgroundColor: "#90a4ae",
+      color: "#ffffff",
+    },
+    {
+      key: "multiple_agents",
+      label: "Multiple Agents (Y/N)",
+      width: "10%",
+      backgroundColor: "#7C8F98",
+      color: "#ffffff",
+    },
     { key: "escalation", label: "Escalation (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
     { key: "call_tone", label: "Call Tone", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "issue_discussed", label: "Issue Discussed", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
@@ -355,9 +391,21 @@ const Dashboard: React.FC = () => {
     { key: "status_query", label: "Status Query", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "call_type", label: "Call Type", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
     { key: "part_request", label: "Part Request (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "parts_dispatch", label: "Parts Dispatch (Y/N)", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    {
+      key: "parts_dispatch",
+      label: "Parts Dispatch (Y/N)",
+      width: "10%",
+      backgroundColor: "#7C8F98",
+      color: "#ffffff",
+    },
     { key: "field_service", label: "Field Service (Y/N)", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "digital_service", label: "Digital Services Offered (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    {
+      key: "digital_service",
+      label: "Digital Services Offered (Y/N)",
+      width: "10%",
+      backgroundColor: "#90a4ae",
+      color: "#ffffff",
+    },
     // { key: "transcript", label: "Transcript", width: "5%", backgroundColor: "#7C8F98", color: "#ffffff" },
   ]
 
@@ -487,7 +535,8 @@ const Dashboard: React.FC = () => {
 
   const calculateFilteredData = (data: TableData[]) => {
     const totalCalls = data.length
-    const callRoutingAccuracy = (data.filter((row) => row.call_quality === "Good").length / data.length) * 100 || 0
+    const callRoutingAccuracy =
+      data.length > 0 ? (data.filter((row) => row.call_quality === "Good").length / data.length) * 100 : 0
     const multipleAgents = (data.filter((row) => row.multiple_agents === "Yes").length / data.length) * 100 || 0
     const callHoldPercentage =
       (data.reduce((sum, row) => sum + (Number.parseInt(row.hold_time?.toString() || "0") || 0), 0) /
@@ -730,7 +779,7 @@ const Dashboard: React.FC = () => {
         <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
           {renderKPI(
             "Call Routing Accuracy",
-            filteredDashboardData?.summary?.call_routing_accuracy || 0,
+            filteredData?.summary?.call_routing_accuracy || 0,
             "%",
             <AirlineStopsOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
           )}
@@ -841,6 +890,14 @@ const Dashboard: React.FC = () => {
                         </IconButton>
                       ) : column.key === "hold_time" || column.key === "route_time" ? (
                         String(row[column.key] || "0")
+                      ) : column.key === "call_quality" ? (
+                        (() => {
+                          const qualityValue = Number.parseFloat(String(row[column.key] || "0"))
+                          const wholeNumber = Math.round(qualityValue)
+                          if (qualityValue === 100) return `${wholeNumber}% Good`
+                          if (qualityValue >= 55.55) return `${wholeNumber}% Can be improved`
+                          return `${wholeNumber}% Poor`
+                        })()
                       ) : (
                         String(row[column.key] || "")
                       )}
