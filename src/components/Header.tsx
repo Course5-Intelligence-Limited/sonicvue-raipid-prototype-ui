@@ -39,12 +39,11 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
           <MenuIcon sx={{ height:'20px'}}/>
         </IconButton> */}
         <Button
-          sx={{ height: '30px', bgcolor: '#0c0c0c', fontSize: '10px', marginBottom:'10px', marginRight:'20px' }}
+          sx={{ height: '30px',width:'30px', bgcolor: '#0c0c0c', fontSize: '10px', marginBottom:'10px', marginRight:'20px' }}
           variant="contained"
           onClick={() => navigate('/upload')}
         >
           <UploadFileIcon sx={{ height: '15px' }} />
-          Upload New Files
         </Button>
         <Avatar sx={{ height: '25px', width: '25px', bgcolor: '#6800E0', marginBottom: '10px', fontSize: '12px' }}>AK</Avatar>
         <IconButton onClick={onLogout} sx={{ marginBottom: '10px' }} color="inherit">

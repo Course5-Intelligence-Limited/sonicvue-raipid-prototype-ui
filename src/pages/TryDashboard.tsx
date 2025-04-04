@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect } from "react"
 import {
@@ -137,6 +139,33 @@ const DataTableCell = styled(TableCell)(({ theme }) => ({
   overflow: "hidden",
   textOverflow: "ellipsis",
 }))
+
+// Custom label renderer for pie chart to make font smaller and position labels outside the chart
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, fill }: any) => {
+  const RADIAN = Math.PI / 180
+  // Increase the radius to position labels further from the pie
+  const radius = outerRadius * 1.2 // Increased from 0.8 to 1.2 to move labels outward
+  const x = cx + radius * Math.cos(-midAngle * RADIAN)
+  const y = cy + radius * Math.sin(-midAngle * RADIAN)
+
+  // Add a small line connecting the pie to the label
+  const lineX1 = cx + outerRadius * 0.95 * Math.cos(-midAngle * RADIAN)
+  const lineY1 = cy + outerRadius * 0.95 * Math.sin(-midAngle * RADIAN)
+  const lineX2 = cx + outerRadius * 1.1 * Math.cos(-midAngle * RADIAN)
+  const lineY2 = cy + outerRadius * 1.1 * Math.sin(-midAngle * RADIAN)
+
+  return (
+    <g>
+      {/* Line connecting pie to label */}
+      <line x1={lineX1} y1={lineY1} x2={lineX2} y2={lineY2} stroke={fill} strokeWidth={1} />
+
+      {/* The label text */}
+      <text x={x} y={y} fill={fill} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize="12px">
+        {`${name} ${(percent * 100).toFixed(0)}%`}
+      </text>
+    </g>
+  )
+}
 
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
@@ -306,41 +335,29 @@ const Dashboard: React.FC = () => {
 
   const columns: TableData[] = [
     { key: "filename", label: "File Name", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "call_time", label: "Call Time", width: "8%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "hold_time", label: "Hold Time", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "route_time", label: "Route Time", width: "8%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "resolution_time", label: "Resolution Time", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "greeting", label: "Greeting", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "phone_number", label: "Phone Number", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "email_address", label: "Email Address", width: "15%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    { key: "call_time", label: "Call Time (Sec)", width: "8%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    { key: "hold_time", label: "Hold Time (Sec)", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    { key: "route_time", label: "Route Time (Sec)", width: "8%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    { key: "resolution_time", label: "Resolution Time (Sec)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    { key: "greeting", label: "Greeting (Y/N)", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    { key: "phone_number", label: "Phone Number Collected (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    { key: "email_address", label: "Email Address Collected (Y/N)", width: "15%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "call_quality", label: "Call Quality", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    {
-      key: "resolution_confirmation",
-      label: "Resolution Confirmation",
-      width: "10%",
-      backgroundColor: "#90a4ae",
-      color: "#ffffff",
-    },
+    { key: "resolution_confirmation", label: "Resolution Confirmation (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
     { key: "hold", label: "Hold", width: "5%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    {
-      key: "hold_satisfaction",
-      label: "Hold Satisfaction",
-      width: "10%",
-      backgroundColor: "#90a4ae",
-      color: "#ffffff",
-    },
-    { key: "multiple_agents", label: "Multiple Agents", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "escalation", label: "Escalation", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    { key: "hold_satisfaction", label: "Hold Satisfaction", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    { key: "multiple_agents", label: "Multiple Agents (Y/N)", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    { key: "escalation", label: "Escalation (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
     { key: "call_tone", label: "Call Tone", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "issue_discussed", label: "Issue Discussed", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
     { key: "complexity", label: "Complexity", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "issue_type", label: "Issue Type", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
     { key: "status_query", label: "Status Query", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "call_type", label: "Call Type", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "part_request", label: "Part Request", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
-    { key: "parts_dispatch", label: "Parts Dispatch", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "field_service", label: "Field Service", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
-    { key: "digital_service", label: "Digital Service", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    { key: "part_request", label: "Part Request (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
+    { key: "parts_dispatch", label: "Parts Dispatch (Y/N)", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    { key: "field_service", label: "Field Service (Y/N)", width: "10%", backgroundColor: "#7C8F98", color: "#ffffff" },
+    { key: "digital_service", label: "Digital Services Offered (Y/N)", width: "10%", backgroundColor: "#90a4ae", color: "#ffffff" },
     // { key: "transcript", label: "Transcript", width: "5%", backgroundColor: "#7C8F98", color: "#ffffff" },
   ]
 
@@ -404,7 +421,7 @@ const Dashboard: React.FC = () => {
                 dataKey="value"
                 onClick={(entry) => handleChartClick(entry)}
                 cursor="pointer"
-                label={({ percent, name }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={renderCustomizedLabel}
               >
                 {data.map((entry, index) => (
                   <Cell
@@ -475,7 +492,7 @@ const Dashboard: React.FC = () => {
     const callHoldPercentage =
       (data.reduce((sum, row) => sum + (Number.parseInt(row.hold_time?.toString() || "0") || 0), 0) /
         (data.length * 60)) *
-        100 || 0
+      100 || 0
     const escalatedCalls = (data.filter((row) => row.escalation === "Yes").length / data.length) * 100 || 0
     const resolutionConfirmation =
       (data.filter((row) => row.resolution_confirmation === "Yes").length / data.length) * 100 || 0
@@ -580,13 +597,13 @@ const Dashboard: React.FC = () => {
 
   const rootCauseAnalysis = filteredDashboardData?.root_cause_analysis
     ? [
-        {
-          category: "Root Cause Analysis",
-          HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
-          ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
-          RouteTime: filteredDashboardData.root_cause_analysis.route_time,
-        },
-      ]
+      {
+        category: "Root Cause Analysis",
+        HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
+        ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
+        RouteTime: filteredDashboardData.root_cause_analysis.route_time,
+      },
+    ]
     : []
 
   return (
@@ -752,7 +769,7 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
           {renderKPI(
-            "CS Portal Recommended",
+            "Digital Services Offered",
             filteredDashboardData?.summary?.cs_portal_recommended || 0,
             "%",
             <TravelExploreOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
