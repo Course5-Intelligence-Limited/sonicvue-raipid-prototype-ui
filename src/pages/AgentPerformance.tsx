@@ -33,40 +33,40 @@ import {
   Timer,
   HourglassEmpty,
 } from "@mui/icons-material"
-import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
+import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined"
 
-// Styled components
+// Styled components with reduced sizes
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   color: "white",
   fontWeight: 500,
-  padding: "12px 16px",
-  fontSize: "14px",
+  padding: "8px 12px", // Reduced padding
+  fontSize: "13px", // Reduced font size
   whiteSpace: "nowrap",
-  "&:first-of-type": { width: "60px" },
-  "&:nth-of-type(2)": { width: "150px" },
-  "&:nth-of-type(3)": { width: "100px" },
-  "&:nth-of-type(4)": { width: "120px" },
-  "&:nth-of-type(5)": { width: "150px" },
-  "&:last-child": { width: "60px" },
+  "&:first-of-type": { width: "50px" }, // Reduced width
+  "&:nth-of-type(2)": { width: "130px" }, // Reduced width
+  "&:nth-of-type(3)": { width: "90px" }, // Reduced width
+  "&:nth-of-type(4)": { width: "100px" }, // Reduced width
+  "&:nth-of-type(5)": { width: "130px" }, // Reduced width
+  "&:last-child": { width: "50px" }, // Reduced width
 }))
 
 const PercentageCell = styled(TableCell)<{ value: number }>(({ value }) => ({
-  padding: "12px 16px",
-  width: "100px",
+  padding: "8px 12px", // Reduced padding
+  width: "90px", // Reduced width
   "& .percentage": {
     backgroundColor: value >= 100 ? "rgba(46, 204, 113, 0.1)" : "rgba(255, 99, 71, 0.1)",
     color: value >= 100 ? "rgb(46, 204, 113)" : "rgb(255, 99, 71)",
-    padding: "4px 8px",
+    padding: "3px 6px", // Reduced padding
     borderRadius: "4px",
-    fontSize: "12px",
+    fontSize: "11px", // Reduced font size
     fontWeight: 500,
   },
 }))
 
 const StyledSelect = styled(Select)({
-  height: "40px",
+  height: "36px", // Reduced height
   backgroundColor: "white",
-  borderRadius: "8px",
+  borderRadius: "6px", // Reduced border radius
   "& .MuiOutlinedInput-notchedOutline": {
     borderColor: "#E5E7EB",
   },
@@ -82,20 +82,20 @@ const KPICard = ({ icon, value, label }: { icon: React.ReactNode; value: string;
   <Paper
     elevation={0}
     sx={{
-      p: 2,
+      p: 1.5, // Reduced padding
       border: "1px solid #E5E7EB",
-      borderRadius: "8px",
+      borderRadius: "6px", // Reduced border radius
       display: "flex",
       alignItems: "flex-start",
-      gap: 2,
+      gap: 1.5, // Reduced gap
       height: "100%",
-      minHeight: "90px",
+      minHeight: "80px", // Reduced min height
     }}
   >
     <Box
       sx={{
-        width: "36px",
-        height: "36px",
+        width: "32px", // Reduced size
+        height: "32px", // Reduced size
         borderRadius: "50%",
         backgroundColor: "rgba(108, 43, 217, 0.1)",
         display: "flex",
@@ -106,10 +106,10 @@ const KPICard = ({ icon, value, label }: { icon: React.ReactNode; value: string;
       {icon}
     </Box>
     <Box>
-      <Typography variant="h6" sx={{ fontSize: "20px", fontWeight: 600, mb: 0.5 }}>
+      <Typography variant="h6" sx={{ fontSize: "18px", fontWeight: 600, mb: 0.5 }}>
         {value}
       </Typography>
-      <Typography color="text.secondary" sx={{ fontSize: "13px" }}>
+      <Typography color="text.secondary" sx={{ fontSize: "12px" }}>
         {label}
       </Typography>
     </Box>
@@ -221,32 +221,44 @@ export default function AgentDashboard(): React.ReactElement {
     }
 
   const kpiData = [
-    { icon: <Phone sx={{ color: "#6C2BD9" }} />, value: "200", label: "Total calls" },
-    { icon: <Person sx={{ color: "#6C2BD9" }} />, value: "20", label: "Total agents" },
-    { icon: <Speed sx={{ color: "#6C2BD9" }} />, value: "10", label: "Average calls handled" },
-    { icon: <StarRate sx={{ color: "#6C2BD9" }} />, value: "98%", label: "CSAT scores" },
-    { icon: <AccessTime sx={{ color: "#6C2BD9" }} />, value: "23 Min", label: "Average Handling Time" },
-    { icon: <Timer sx={{ color: "#6C2BD9" }} />, value: "30 Mins", label: "Average call duration" },
-    { icon: <HourglassEmpty sx={{ color: "#6C2BD9" }} />, value: "02 Mins", label: "Average hold time" },
+    { icon: <Phone sx={{ color: "#6C2BD9", fontSize: "18px" }} />, value: "200", label: "Total calls" },
+    { icon: <Person sx={{ color: "#6C2BD9", fontSize: "18px" }} />, value: "20", label: "Total agents" },
+    { icon: <Speed sx={{ color: "#6C2BD9", fontSize: "18px" }} />, value: "10", label: "Average calls handled" },
+    { icon: <StarRate sx={{ color: "#6C2BD9", fontSize: "18px" }} />, value: "98%", label: "CSAT scores" },
+    {
+      icon: <AccessTime sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
+      value: "23 Min",
+      label: "Average Handling Time",
+    },
+    { icon: <Timer sx={{ color: "#6C2BD9", fontSize: "18px" }} />, value: "30 Mins", label: "Average call duration" },
+    {
+      icon: <HourglassEmpty sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
+      value: "02 Mins",
+      label: "Average hold time",
+    },
   ]
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
-      <Container maxWidth={false} sx={{ py: 3, px: 0, maxWidth: "100%", margin: "0 auto" }}>
-        <Typography variant="h4" gutterBottom sx={{
-          bgcolor: '#6800E0',
-          height: '40px',
-          color: 'white',
-          fontSize: '16px',
-          p: 2,
-          marginBottom: '10px',
-          marginTop: '-15px',
-          borderRadius: 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
-          <SupportAgentOutlinedIcon />
+      <Container maxWidth={false} sx={{ py: 2, px: 1, maxWidth: "100%", margin: "0 auto" }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{
+            bgcolor: "#6800E0",
+            height: "36px", // Reduced height
+            color: "white",
+            fontSize: "15px", // Reduced font size
+            p: 1.5, // Reduced padding
+            marginBottom: "8px", // Reduced margin
+            marginTop: "-10px", // Adjusted margin
+            borderRadius: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.8, // Reduced gap
+          }}
+        >
+          <SupportAgentOutlinedIcon sx={{ fontSize: "18px" }} /> {/* Reduced icon size */}
           Agent Performance
         </Typography>
 
@@ -255,8 +267,8 @@ export default function AgentDashboard(): React.ReactElement {
           sx={{
             display: "flex",
             flexDirection: { xs: "column", lg: "row" },
-            gap: 2,
-            mb: 3,
+            gap: 1.5, // Reduced gap
+            mb: 2, // Reduced margin
             alignItems: { xs: "stretch", lg: "center" },
           }}
         >
@@ -264,12 +276,12 @@ export default function AgentDashboard(): React.ReactElement {
             sx={{
               display: "flex",
               flexDirection: { xs: "column", sm: "row" },
-              gap: 2,
+              gap: 1.5, // Reduced gap
               flex: 1,
               flexWrap: { sm: "wrap", lg: "nowrap" },
             }}
           >
-            <FormControl sx={{ minWidth: { xs: "100%", sm: 200 }, flex: { sm: "1 1 calc(33.33% - 8px)", lg: 1 } }}>
+            <FormControl sx={{ minWidth: { xs: "100%", sm: 180 }, flex: { sm: "1 1 calc(33.33% - 6px)", lg: 1 } }}>
               <StyledSelect value={callType} onChange={handleSelectChange(setCallType)} displayEmpty>
                 <MenuItem value="" disabled>
                   Call Type
@@ -278,7 +290,7 @@ export default function AgentDashboard(): React.ReactElement {
                 <MenuItem value="outbound">Outbound</MenuItem>
               </StyledSelect>
             </FormControl>
-            <FormControl sx={{ minWidth: { xs: "100%", sm: 200 }, flex: { sm: "1 1 calc(33.33% - 8px)", lg: 1 } }}>
+            <FormControl sx={{ minWidth: { xs: "100%", sm: 180 }, flex: { sm: "1 1 calc(33.33% - 6px)", lg: 1 } }}>
               <StyledSelect value={escalationStatus} onChange={handleSelectChange(setEscalationStatus)} displayEmpty>
                 <MenuItem value="" disabled>
                   Escalation Status
@@ -287,7 +299,7 @@ export default function AgentDashboard(): React.ReactElement {
                 <MenuItem value="not-escalated">Not Escalated</MenuItem>
               </StyledSelect>
             </FormControl>
-            <FormControl sx={{ minWidth: { xs: "100%", sm: 200 }, flex: { sm: "1 1 calc(33.33% - 8px)", lg: 1 } }}>
+            <FormControl sx={{ minWidth: { xs: "100%", sm: 180 }, flex: { sm: "1 1 calc(33.33% - 6px)", lg: 1 } }}>
               <StyledSelect value={qualityScore} onChange={handleSelectChange(setQualityScore)} displayEmpty>
                 <MenuItem value="" disabled>
                   Quality Score
@@ -300,7 +312,7 @@ export default function AgentDashboard(): React.ReactElement {
           </Box>
           <Button
             variant="contained"
-            startIcon={<Download />}
+            startIcon={<Download sx={{ fontSize: "18px" }} />}
             sx={{
               bgcolor: "#7C3AED",
               "&:hover": {
@@ -309,7 +321,9 @@ export default function AgentDashboard(): React.ReactElement {
               textTransform: "none",
               minWidth: { xs: "100%", md: "auto" },
               borderRadius: "5px",
-              height: "40px",
+              height: "36px", // Reduced height
+              fontSize: "13px", // Reduced font size
+              px: 2, // Reduced padding
             }}
           >
             Download PDF
@@ -320,9 +334,9 @@ export default function AgentDashboard(): React.ReactElement {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-            gap: 2,
-            mb: 4,
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", // Reduced min width
+            gap: 1.5, // Reduced gap
+            mb: 3,
           }}
         >
           {kpiData.map((kpi, index) => (
@@ -331,7 +345,7 @@ export default function AgentDashboard(): React.ReactElement {
         </Box>
 
         {/* Table */}
-        <Typography variant="h6" sx={{ mb: 2, fontSize: "16px", fontWeight: 500 }}>
+        <Typography variant="h6" sx={{ mb: 1.5, fontSize: "15px", fontWeight: 500 }}>
           Quality audit scores
         </Typography>
 
@@ -339,16 +353,16 @@ export default function AgentDashboard(): React.ReactElement {
           component={Paper}
           sx={{
             border: "1px solid #E5E7EB",
-            borderRadius: "8px",
-            mb: 3,
+            borderRadius: "6px", // Reduced border radius
+            mb: 2.5, // Reduced margin
             maxWidth: "100%",
             overflowX: "auto",
             "&::-webkit-scrollbar": {
-              height: "8px",
+              height: "6px", // Reduced scrollbar height
             },
             "&::-webkit-scrollbar-thumb": {
               backgroundColor: "#E5E7EB",
-              borderRadius: "4px",
+              borderRadius: "3px", // Reduced border radius
             },
           }}
         >
@@ -375,7 +389,7 @@ export default function AgentDashboard(): React.ReactElement {
                       backgroundColor: "#000000",
                       color: "white",
                       fontWeight: 600,
-                      fontSize: "14px",
+                      fontSize: "13px", // Reduced font size
                     }}
                   >
                     {header}
@@ -386,11 +400,11 @@ export default function AgentDashboard(): React.ReactElement {
             <TableBody>
               {mockData.map((row) => (
                 <TableRow key={row.id} sx={{ "&:hover": { bgcolor: "#F9FAFB" } }}>
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell sx={{ fontWeight: 500 }}>{row.name}</TableCell>
-                  <TableCell>{row.totalCalls}</TableCell>
-                  <TableCell>{row.qualityScore}</TableCell>
-                  <TableCell>{row.avgHandlingTime}</TableCell>
+                  <TableCell sx={{ padding: "8px 12px", fontSize: "13px" }}>{row.id}</TableCell>
+                  <TableCell sx={{ padding: "8px 12px", fontWeight: 500, fontSize: "13px" }}>{row.name}</TableCell>
+                  <TableCell sx={{ padding: "8px 12px", fontSize: "13px" }}>{row.totalCalls}</TableCell>
+                  <TableCell sx={{ padding: "8px 12px", fontSize: "13px" }}>{row.qualityScore}</TableCell>
+                  <TableCell sx={{ padding: "8px 12px", fontSize: "13px" }}>{row.avgHandlingTime}</TableCell>
                   <PercentageCell value={row.email}>
                     <span className="percentage">{row.email}%</span>
                   </PercentageCell>
@@ -406,17 +420,23 @@ export default function AgentDashboard(): React.ReactElement {
                   <PercentageCell value={row.resolution}>
                     <span className="percentage">{row.resolution}%</span>
                   </PercentageCell>
-                  <TableCell>
+                  <TableCell sx={{ padding: "8px 12px" }}>
                     <Rating
                       value={row.rating}
                       readOnly
                       precision={0.5}
+                      size="small" // Changed to small size
                       sx={{
                         "& .MuiRating-iconFilled": {
                           color: "#7C3AED",
                         },
                       }}
                     />
+                  </TableCell>
+                  <TableCell sx={{ padding: "8px 12px" }}>
+                    <IconButton size="small">
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -427,4 +447,3 @@ export default function AgentDashboard(): React.ReactElement {
     </Box>
   )
 }
-
