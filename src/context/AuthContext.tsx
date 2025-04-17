@@ -1,23 +1,24 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { createContext, useState, useEffect, type ReactNode } from "react"
+import type React from "react";
+import { createContext, useState, useEffect, type ReactNode } from "react";
 
 interface User {
-  id?: string
-  username: string
-  email: string
+  id?: string;
+  username: string;
+  email: string;
 }
 
 interface AuthContextType {
-  user: User | null
-  isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
-  signup: (username: string, email: string, password: string) => Promise<void>
-  logout: () => void
-  loading: boolean
-  error: string | null
-  clearError: () => void
+  user: User | null;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (username: string, email: string, password: string) => Promise<void>;
+  logout: () => void;
+  loading: boolean;
+  error: string | null;
+  clearError: () => void;
+  getAuthToken: () => string | null; // Function to get the token
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -29,49 +30,68 @@ export const AuthContext = createContext<AuthContextType>({
   loading: false,
   error: null,
   clearError: () => {},
-})
+  getAuthToken: () => null,
+});
 
 interface AuthProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authToken, setAuthToken] = useState(localStorage.getItem("authToken") || null);
+
+  // Get token with proper formatting
+  const getAuthToken = (): string | null => {
+    const token = localStorage.getItem("authToken");
+    if (!token) return null;
+
+    // Log token for debugging (remove in production)
+    console.log("Current auth token:", token);
+
+    return token;
+  };
 
   // Check for existing auth on mount
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem("authToken")
-      const storedUser = localStorage.getItem("user")
+      const token = localStorage.getItem("authToken");
+      const storedUser = localStorage.getItem("user");
 
       if (token && storedUser) {
         try {
-          setUser(JSON.parse(storedUser))
-          setIsAuthenticated(true)
+          // Parse the stored user data
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          setIsAuthenticated(true);
+
+          // Log successful authentication
+          console.log("User authenticated from stored token");
         } catch (err) {
           // Invalid stored user data
-          localStorage.removeItem("authToken")
-          localStorage.removeItem("user")
+          console.error("Error parsing stored user data:", err);
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("user");
         }
       }
 
-      setLoading(false)
-    }
+      setLoading(false);
+    };
 
-    checkAuth()
-  }, [])
+    checkAuth();
+  }, []);
 
   const clearError = () => {
-    setError(null)
-  }
+    setError(null);
+  };
 
-  // Update the login function to better handle errors
+
   const login = async (email: string, password: string) => {
-    setLoading(true)
-    clearError()
+    setLoading(true);
+    clearError();
 
     try {
       const response = await fetch("http://172.203.229.218:8082/api/auth/login", {
@@ -80,38 +100,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Invalid email or password")
+        throw new Error(data.message || "Invalid email or password");
+      }
+
+      // Ensure we have a token
+      if (!data.token) {
+        throw new Error("No token received from server");
       }
 
       // Store auth data
-      localStorage.setItem("authToken", data.token || "dummy-token")
+      localStorage.setItem("authToken", data.token);
+
+      // Log token for debugging (remove in production)
+      console.log("Token stored:", data.token);
 
       // Create user object from response
       const userData = {
         id: data.id || data.userId || "user-id",
         username: data.username || email.split("@")[0],
         email: email,
-      }
+      };
 
-      localStorage.setItem("user", JSON.stringify(userData))
-      setUser(userData)
-      setIsAuthenticated(true)
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+      setIsAuthenticated(true);
     } catch (err: any) {
-      setError(err.message || "Login failed. Please try again.")
-      throw err
+      setError(err.message || "Login failed. Please try again.");
+      throw err;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const signup = async (username: string, email: string, password: string) => {
-    setLoading(true)
-    clearError()
+    setLoading(true);
+    clearError();
 
     try {
       const response = await fetch("http://172.203.229.218:8082/api/auth/signup", {
@@ -120,30 +148,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, email, password }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Registration failed")
+        throw new Error(data.message || "Registration failed");
       }
 
       // Don't authenticate user after signup - they need to login
-      return data
+      return data;
     } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.")
-      throw err
+      setError(err.message || "Registration failed. Please try again.");
+      throw err;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const logout = () => {
-    localStorage.removeItem("authToken")
-    localStorage.removeItem("user")
-    setUser(null)
-    setIsAuthenticated(false)
-  }
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    setUser(null);
+    setIsAuthenticated(false);
+  };
 
   return (
     <AuthContext.Provider
@@ -156,9 +184,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         loading,
         error,
         clearError,
+        getAuthToken,
       }}
     >
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};

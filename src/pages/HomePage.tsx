@@ -53,8 +53,8 @@ const HomePage: React.FC = () => {
         <Box sx={{ p: 3 }}>
             <Container maxWidth="xl">
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-                    <Typography sx={{ marginBottom: '20px', marginRight: '5px' }}>Welcome</Typography>
-                    <Typography sx={{ marginBottom: '20px', color: '#6800E0', fontWeight: 600 }}>Astha!</Typography>
+                    <Typography sx={{ marginBottom: '20px', marginRight: '5px', color: '#6800E0', fontWeight: 600 }}>Welcome</Typography>
+                    <Typography sx={{ marginBottom: '20px', color: '#6800E0', fontWeight: 600 }}>!</Typography>
                 </Typography>
                 <Grid container spacing={2}>
                     {cards.map((card, index) => (
