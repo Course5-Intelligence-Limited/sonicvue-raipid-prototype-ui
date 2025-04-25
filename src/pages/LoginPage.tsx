@@ -195,7 +195,7 @@ const LoginPage: React.FC = () => {
           </Typography>
 
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Harness the Power of Gen-AI for Unmatched Insights and Elevate your customer service game
+          Reimagine your contact center with C5i's SonicVUE - where human empathy meets AI precision.
           </Typography>
 
           {error && (
