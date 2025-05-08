@@ -16,6 +16,7 @@ import TableData from "./pages/TableView"
 import MyComponent from "./pages/HomePage"
 import AgentPerformance from "./pages/AgentPerformance"
 import PartsDispatch from "./pages/PartsDispatch"
+import FieldVisitDashboard from "./pages/FieldVisit"
 
 const theme = createTheme({
   palette: {
@@ -55,6 +56,7 @@ function AppContent() {
           <Route path="/tableview" element={<TableData />} />
           <Route path="/agent" element={<AgentPerformance />} />
           <Route path="/parts" element={<PartsDispatch />} />
+          <Route path="/field" element={<FieldVisitDashboard />} />
         </Route>
       )}
       <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/login"} replace />} />

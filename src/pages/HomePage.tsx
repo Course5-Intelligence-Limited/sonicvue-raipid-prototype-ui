@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
 
     const cards = [
         {
-            title: 'Call Efficiency',
+            title: 'Call Analysis',
             icon: <AssignmentOutlinedIcon sx={{ fontSize: 32, color: '#8000ff' }} />,
             description: 'Insights on call performance and customer tone',
             route: '/dashboard',
@@ -35,7 +35,7 @@ const HomePage: React.FC = () => {
             title: 'Field visit',
             icon: <BarChartIcon sx={{ fontSize: 32, color: '#8000ff' }} />,
             description: 'Analyze and improve customer satisfaction scores',
-            route: '/dashboard/field-visit',
+            route: '/field',
         },
     ];
 

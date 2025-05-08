@@ -104,20 +104,12 @@ const Sidebar: React.FC = () => {
             <ListItemText sx={{ minWidth: '150px' }} primary="Parts Dispatched" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
           )}
         </ListItemButton>
-        <ListItemButton sx={{ height: '50px' }} component={Link} to="/dashboard">
+        <ListItemButton sx={{ height: '50px' }} component={Link} to="/field">
           <ListItemIcon sx={{ fontSize: '20px', minWidth: '30px', color: 'white' }}>
             <ShareLocationOutlinedIcon sx={{ fontSize: '20px' }} />
           </ListItemIcon>
           {expanded && (
             <ListItemText sx={{ minWidth: '150px' }} primary="Field Visit" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
-          )}
-        </ListItemButton>
-        <ListItemButton sx={{ height: '50px' }} component={Link} to="/dashboard">
-          <ListItemIcon sx={{ fontSize: '20px', minWidth: '30px', color: 'white' }}>
-            <TravelExploreOutlinedIcon sx={{ fontSize: '20px' }} />
-          </ListItemIcon>
-          {expanded && (
-            <ListItemText sx={{ minWidth: '150px' }} primary="CS Portal" primaryTypographyProps={{ sx: { fontSize: '14px' } }} />
           )}
         </ListItemButton>
       </List>

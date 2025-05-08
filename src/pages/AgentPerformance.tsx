@@ -144,12 +144,15 @@ const formatTime = (minutes: number): string => {
 
 // Format seconds to HH:MM:SS format
 const formatSeconds = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = Math.floor(seconds % 60)
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
 
-  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
-}
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${secs}s`;
+  }
+  return `${minutes}m ${secs}s`;
+};
 
 export default function AgentDashboard(): React.ReactElement {
   const [callType, setCallType] = useState("")
@@ -237,8 +240,8 @@ export default function AgentDashboard(): React.ReactElement {
 
   // Generate KPI cards data from API response
   const getKpiData = () => {
-    if (!dashboardData) return []
-
+    if (!dashboardData) return [];
+  
     return [
       {
         icon: <Phone sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
@@ -262,21 +265,21 @@ export default function AgentDashboard(): React.ReactElement {
       },
       {
         icon: <AccessTime sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: formatTime(dashboardData.averageHandlingTime),
+        value: formatSeconds(dashboardData.averageHandlingTime),
         label: "Average Handling Time",
       },
       {
         icon: <Timer sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: formatTime(dashboardData.averageCallDuration),
+        value: formatSeconds(dashboardData.averageCallDuration),
         label: "Average call duration",
       },
       {
         icon: <HourglassEmpty sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: formatTime(dashboardData.averageHoldTime),
+        value: formatSeconds(dashboardData.averageHoldTime),
         label: "Average hold time",
       },
-    ]
-  }
+    ];
+  };
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
@@ -290,8 +293,6 @@ export default function AgentDashboard(): React.ReactElement {
             color: "white",
             fontSize: "15px", // Reduced font size
             p: 1.5, // Reduced padding
-            marginBottom: "8px", // Reduced margin
-            marginTop: "-10px", // Adjusted margin
             borderRadius: 1,
             display: "flex",
             alignItems: "center",

@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import {
   Box,
+  Container,
   Typography,
   Grid,
   Paper,
@@ -198,7 +199,7 @@ const Dashboard: React.FC = () => {
     try {
       setLoading(true)
       const response = await axios.get("http://172.203.229.218:8082/dashboard-data", {
-        
+
         params: {
           modality: modality === "All" ? undefined : modality,
           complexity: complexity === "All" ? undefined : complexity === "Medium" ? "Intermediate" : complexity,
@@ -657,329 +658,325 @@ const Dashboard: React.FC = () => {
     : []
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
-        <Typography sx={{ marginBottom: "20px", marginRight: "5px" }}>Welcome</Typography>
-        <Typography sx={{ marginBottom: "20px", color: "#6800E0" }}>Astha!</Typography>
-      </Typography>
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{
-          bgcolor: "#420897",
-          height: "40px",
-          color: "white",
-          fontSize: "16px",
-          p: 2,
-          marginBottom: "10px",
-          marginTop: "-15px",
-          borderRadius: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
-        <InsertChartOutlined />
-        Call Analysis Dashboard
-      </Typography>
+    <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
+      <Container maxWidth={false} sx={{ py: 2, px: 1, maxWidth: "100%", margin: "0 auto" }}>
+        <Typography
+           variant="h4"
+           gutterBottom
+           sx={{
+             bgcolor: "#6800E0",
+             height: "36px",
+             color: "white",
+             fontSize: "15px",
+             p: 1.5,
+             borderRadius: 1,
+             display: "flex",
+             alignItems: "center",
+             gap: 0.8,
+           }}
+        >
+          <InsertChartOutlined sx={{ fontSize: "18px" }} />
+          Call Analysis Dashboard
+        </Typography>
 
-      <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-            <Typography sx={{ minWidth: 120, textAlign: "start", fontSize: "12px", color: "#b0b0b0" }}>
-              Category
-            </Typography>
-            <Typography sx={{ minWidth: 120, textAlign: "start", fontSize: "12px", color: "#b0b0b0" }}>
-              Complexity
-            </Typography>
-            <Typography sx={{ minWidth: 120, textAlign: "start", fontSize: "12px", color: "#b0b0b0" }}>
-              Event Type
-            </Typography>
-          </Box>
+        <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+              <Typography sx={{ minWidth: 120, textAlign: "start", fontSize: "12px", color: "#b0b0b0" }}>
+                Category
+              </Typography>
+              <Typography sx={{ minWidth: 120, textAlign: "start", fontSize: "12px", color: "#b0b0b0" }}>
+                Complexity
+              </Typography>
+              <Typography sx={{ minWidth: 120, textAlign: "start", fontSize: "12px", color: "#b0b0b0" }}>
+                Event Type
+              </Typography>
+            </Box>
 
-          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-            <FormControl sx={{ minWidth: 120 }}>
-              <Select
-                sx={{ height: "30px", fontSize: "12px" }}
-                value={modality}
-                onChange={(e) => applyFilter("Modality", e.target.value as string)}
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  <em style={{ fontSize: "12px" }}>Select</em>
-                </MenuItem>
-                <MenuItem sx={{ fontSize: "12px" }} value="All">
-                  All
-                </MenuItem>
-                <MenuItem sx={{ fontSize: "12px" }} value="CT">
-                  Ultrasound
-                </MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl sx={{ minWidth: 120 }}>
-              <Select
-                sx={{ height: "30px", fontSize: "12px" }}
-                value={complexity}
-                onChange={(e) => applyFilter("Calls Complexity", e.target.value as string)}
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  <em style={{ fontSize: "12px" }}>Select</em>
-                </MenuItem>
-                <MenuItem sx={{ fontSize: "12px" }} value="All">
-                  All
-                </MenuItem>
-                <MenuItem sx={{ fontSize: "12px" }} value="Easy">
-                  Easy
-                </MenuItem>
-                <MenuItem sx={{ fontSize: "12px" }} value="Intermediate">
-                  Intermediate
-                </MenuItem>
-                <MenuItem sx={{ fontSize: "12px" }} value="Difficult">
-                  Difficult
-                </MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl sx={{ minWidth: 120 }}>
-              <Select
-                sx={{ height: "30px", fontSize: "12px" }}
-                value={eventType}
-                onChange={(e) => applyFilter("Event Type", e.target.value as string)}
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  <em style={{ fontSize: "12px" }}>Select</em>
-                </MenuItem>
-                <MenuItem sx={{ fontSize: "12px" }} value="All">
-                  All
-                </MenuItem>
-                {Object.keys(filteredDashboardData?.event_type || {}).map((type) => (
-                  <MenuItem key={type} sx={{ fontSize: "12px" }} value={type}>
-                    {type}
+            <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+              <FormControl sx={{ minWidth: 120 }}>
+                <Select
+                  sx={{ height: "30px", fontSize: "12px" }}
+                  value={modality}
+                  onChange={(e) => applyFilter("Modality", e.target.value as string)}
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    <em style={{ fontSize: "12px" }}>Select</em>
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                  <MenuItem sx={{ fontSize: "12px" }} value="All">
+                    All
+                  </MenuItem>
+                  <MenuItem sx={{ fontSize: "12px" }} value="CT">
+                    Ultrasound
+                  </MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl sx={{ minWidth: 120 }}>
+                <Select
+                  sx={{ height: "30px", fontSize: "12px" }}
+                  value={complexity}
+                  onChange={(e) => applyFilter("Calls Complexity", e.target.value as string)}
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    <em style={{ fontSize: "12px" }}>Select</em>
+                  </MenuItem>
+                  <MenuItem sx={{ fontSize: "12px" }} value="All">
+                    All
+                  </MenuItem>
+                  <MenuItem sx={{ fontSize: "12px" }} value="Easy">
+                    Easy
+                  </MenuItem>
+                  <MenuItem sx={{ fontSize: "12px" }} value="Intermediate">
+                    Intermediate
+                  </MenuItem>
+                  <MenuItem sx={{ fontSize: "12px" }} value="Difficult">
+                    Difficult
+                  </MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl sx={{ minWidth: 120 }}>
+                <Select
+                  sx={{ height: "30px", fontSize: "12px" }}
+                  value={eventType}
+                  onChange={(e) => applyFilter("Event Type", e.target.value as string)}
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    <em style={{ fontSize: "12px" }}>Select</em>
+                  </MenuItem>
+                  <MenuItem sx={{ fontSize: "12px" }} value="All">
+                    All
+                  </MenuItem>
+                  {Object.keys(filteredDashboardData?.event_type || {}).map((type) => (
+                    <MenuItem key={type} sx={{ fontSize: "12px" }} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
           </Box>
         </Box>
-      </Box>
 
-      <Grid
-        container
-        spacing={2}
-        sx={{ justifyContent: "space-between", flexWrap: "nowrap", overflow: "hidden", padding: "5px" }}
-      >
-        <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
-          {renderKPI(
-            "Total Calls",
-            filteredDashboardData?.summary?.total_calls || 0,
-            "",
-            <TtyOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
-          )}
-        </Grid>
-        <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
-          {renderKPI(
-            "Call Routing Accuracy",
-            filteredData?.summary?.call_routing_accuracy || 0,
-            "%",
-            <AirlineStopsOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
-          )}
-        </Grid>
-        <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
-          {renderKPI(
-            "Multiple Agents Invited",
-            filteredDashboardData?.summary?.multiple_agents || 0,
-            "%",
-            <ConnectWithoutContactOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
-          )}
-        </Grid>
-        <Grid item sx={{ flex: "11 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
-          {renderKPI(
-            "Call Hold",
-            filteredDashboardData?.summary?.call_hold_percentage || 0,
-            "%",
-            <PhonePausedOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
-          )}
-        </Grid>
-        <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
-          {renderKPI(
-            "Escalated Calls",
-            filteredDashboardData?.summary?.escalated_calls || 0,
-            "%",
-            <MoveUpOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
-          )}
-        </Grid>
-        <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
-          {renderKPI(
-            "Resolution Confirmation",
-            filteredDashboardData?.summary?.resolution_confirmation || 0,
-            "%",
-            <HowToRegOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
-          )}
-        </Grid>
-        <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
-          {renderKPI(
-            "Digital Services Offered",
-            filteredDashboardData?.summary?.cs_portal_recommended || 0,
-            "%",
-            <TravelExploreOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
-          )}
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={2} sx={{ mt: 2 }}>
-        {[
-          { title: "Calls Complexity", data: callComplexityData, color: "#1877F2" },
-          { title: "Call Hygiene", data: callHygieneData, color: "#979FDE" },
-          { title: "Tone of Customer", data: toneConversationData, chartType: "Pie", colors: COLORS },
-          { title: "Event Type", data: eventTypeData, color: "#5F81CE" },
-          { title: "Customer Service", data: customerServiceData, color: "#8884d8" },
-          {
-            title: "Root Cause Analysis",
-            data: rootCauseAnalysis,
-            chartType: "StackedBar",
-            colors: ["#00308F", "#5F81CE", "#95D7FF"],
-          },
-        ].map((chart, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
-            {renderChart(chart)}
-          </Grid>
-        ))}
-      </Grid>
-
-      <TableContainer
-        component={Paper}
-        sx={{ boxShadow: 3, borderRadius: 2, maxWidth: "1090px", margin: "auto", mt: 4, overflowX: "auto" }}
-      >
-        <Typography gutterBottom component="div" sx={{ p: "10px", fontSize: "14px" }}>
-          Call Data Table
-        </Typography>
-        <Table sx={{ minWidth: 650 }} aria-label="call data table">
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <StyledTableCell key={column.key} config={column}>
-                  {column.label}
-                </StyledTableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tableLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : filteredTableData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} align="center">
-                  No data available
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredTableData.map((row: any, index: number) => (
-                <TableRow key={index} sx={{ "&:nth-of-type(odd)": { backgroundColor: "#f5f5f5" } }}>
-                  {columns.map((column) => (
-                    <DataTableCell key={`${index}-${column.key}`}>
-                      {column.key === "transcript" ? (
-                        <IconButton
-                          onClick={() => handleOpenTranscript(row.transcript, row.transcriptStatus, row.filename)}
-                          disabled={!row.transcript}
-                        >
-                          <TextSnippet color={row.transcript ? "primary" : "disabled"} />
-                        </IconButton>
-                      ) : column.key === "hold_time" || column.key === "route_time" ? (
-                        String(row[column.key] || "0")
-                      ) : column.key === "call_quality" ? (
-                        (() => {
-                          const qualityValue = Number.parseFloat(String(row[column.key] || "0"))
-                          const wholeNumber = Math.round(qualityValue)
-                          if (qualityValue === 100) return `${wholeNumber}% Good`
-                          if (qualityValue >= 55.55) return `${wholeNumber}% Can be improved`
-                          return `${wholeNumber}% Poor`
-                        })()
-                      ) : (
-                        String(row[column.key] || "")
-                      )}
-                    </DataTableCell>
-                  ))}
-                </TableRow>
-              ))
+        <Grid
+          container
+          spacing={2}
+          sx={{ justifyContent: "space-between", flexWrap: "nowrap", overflow: "hidden", padding: "5px" }}
+        >
+          <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+            {renderKPI(
+              "Total Calls",
+              filteredDashboardData?.summary?.total_calls || 0,
+              "",
+              <TtyOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </Grid>
+          <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+            {renderKPI(
+              "Call Routing Accuracy",
+              filteredData?.summary?.call_routing_accuracy || 0,
+              "%",
+              <AirlineStopsOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
+            )}
+          </Grid>
+          <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+            {renderKPI(
+              "Multiple Agents Invited",
+              filteredDashboardData?.summary?.multiple_agents || 0,
+              "%",
+              <ConnectWithoutContactOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
+            )}
+          </Grid>
+          <Grid item sx={{ flex: "11 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+            {renderKPI(
+              "Call Hold",
+              filteredDashboardData?.summary?.call_hold_percentage || 0,
+              "%",
+              <PhonePausedOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
+            )}
+          </Grid>
+          <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+            {renderKPI(
+              "Escalated Calls",
+              filteredDashboardData?.summary?.escalated_calls || 0,
+              "%",
+              <MoveUpOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
+            )}
+          </Grid>
+          <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+            {renderKPI(
+              "Resolution Confirmation",
+              filteredDashboardData?.summary?.resolution_confirmation || 0,
+              "%",
+              <HowToRegOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
+            )}
+          </Grid>
+          <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+            {renderKPI(
+              "Digital Services Offered",
+              filteredDashboardData?.summary?.cs_portal_recommended || 0,
+              "%",
+              <TravelExploreOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
+            )}
+          </Grid>
+        </Grid>
 
-      <Dialog open={openTranscriptDialog} onClose={() => setOpenTranscriptDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          Transcript
-          <IconButton
-            onClick={() => setOpenTranscriptDialog(false)}
-            sx={{
-              position: "absolute",
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <Close />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {selectedTranscript ? (
-            <Typography
-              variant="body1"
-              component="div"
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          {[
+            { title: "Calls Complexity", data: callComplexityData, color: "#1877F2" },
+            { title: "Call Hygiene", data: callHygieneData, color: "#979FDE" },
+            { title: "Tone of Customer", data: toneConversationData, chartType: "Pie", colors: COLORS },
+            { title: "Event Type", data: eventTypeData, color: "#5F81CE" },
+            { title: "Customer Service", data: customerServiceData, color: "#8884d8" },
+            {
+              title: "Root Cause Analysis",
+              data: rootCauseAnalysis,
+              chartType: "StackedBar",
+              colors: ["#00308F", "#5F81CE", "#95D7FF"],
+            },
+          ].map((chart, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              {renderChart(chart)}
+            </Grid>
+          ))}
+        </Grid>
+
+        <TableContainer
+          component={Paper}
+          sx={{ boxShadow: 3, borderRadius: 2, maxWidth: "1090px", margin: "auto", mt: 4, overflowX: "auto" }}
+        >
+          <Typography gutterBottom component="div" sx={{ p: "10px", fontSize: "14px" }}>
+            Call Data Table
+          </Typography>
+          <Table sx={{ minWidth: 650 }} aria-label="call data table">
+            <TableHead>
+              <TableRow>
+                {columns.map((column) => (
+                  <StyledTableCell key={column.key} config={column}>
+                    {column.label}
+                  </StyledTableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tableLoading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} align="center">
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : filteredTableData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} align="center">
+                    No data available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTableData.map((row: any, index: number) => (
+                  <TableRow key={index} sx={{ "&:nth-of-type(odd)": { backgroundColor: "#f5f5f5" } }}>
+                    {columns.map((column) => (
+                      <DataTableCell key={`${index}-${column.key}`}>
+                        {column.key === "transcript" ? (
+                          <IconButton
+                            onClick={() => handleOpenTranscript(row.transcript, row.transcriptStatus, row.filename)}
+                            disabled={!row.transcript}
+                          >
+                            <TextSnippet color={row.transcript ? "primary" : "disabled"} />
+                          </IconButton>
+                        ) : column.key === "hold_time" || column.key === "route_time" ? (
+                          String(row[column.key] || "0")
+                        ) : column.key === "call_quality" ? (
+                          (() => {
+                            const qualityValue = Number.parseFloat(String(row[column.key] || "0"))
+                            const wholeNumber = Math.round(qualityValue)
+                            if (qualityValue === 100) return `${wholeNumber}% Good`
+                            if (qualityValue >= 55.55) return `${wholeNumber}% Can be improved`
+                            return `${wholeNumber}% Poor`
+                          })()
+                        ) : (
+                          String(row[column.key] || "")
+                        )}
+                      </DataTableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Dialog open={openTranscriptDialog} onClose={() => setOpenTranscriptDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>
+            Transcript
+            <IconButton
+              onClick={() => setOpenTranscriptDialog(false)}
               sx={{
-                whiteSpace: "pre-wrap",
-                fontFamily: "monospace",
-                fontSize: "14px",
-                lineHeight: 1.6,
-                maxHeight: "60vh",
-                overflow: "auto",
-                padding: 1,
+                position: "absolute",
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
               }}
             >
-              {selectedTranscript}
-            </Typography>
-          ) : (
-            <Typography variant="body1" color="text.secondary" align="center">
-              No transcript available for this call.
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={downloadTranscript}
-            disabled={!selectedTranscript}
-            sx={{
-              backgroundColor: "#6800E0",
-              color: "white",
-              height: "35px",
-              fontSize: "12px",
-              "&:hover": {
-                backgroundColor: "#5600B8",
-              },
-              "&:disabled": {
-                backgroundColor: "#A9A9A9",
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            {selectedTranscript ? (
+              <Typography
+                variant="body1"
+                component="div"
+                sx={{
+                  whiteSpace: "pre-wrap",
+                  fontFamily: "monospace",
+                  fontSize: "14px",
+                  lineHeight: 1.6,
+                  maxHeight: "60vh",
+                  overflow: "auto",
+                  padding: 1,
+                }}
+              >
+                {selectedTranscript}
+              </Typography>
+            ) : (
+              <Typography variant="body1" color="text.secondary" align="center">
+                No transcript available for this call.
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={downloadTranscript}
+              disabled={!selectedTranscript}
+              sx={{
+                backgroundColor: "#6800E0",
                 color: "white",
-              },
-            }}
-          >
-            <GetApp sx={{ color: "white", height: "16px", mr: 1 }} />
-            Download
-          </Button>
-          <Button onClick={() => setOpenTranscriptDialog(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+                height: "35px",
+                fontSize: "12px",
+                "&:hover": {
+                  backgroundColor: "#5600B8",
+                },
+                "&:disabled": {
+                  backgroundColor: "#A9A9A9",
+                  color: "white",
+                },
+              }}
+            >
+              <GetApp sx={{ color: "white", height: "16px", mr: 1 }} />
+              Download
+            </Button>
+            <Button onClick={() => setOpenTranscriptDialog(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
 
-      {alert.show && (
-        <Alert sx={{ mt: 2 }} severity={alert.type as "error" | "info" | "success" | "warning"}>
-          <AlertTitle>{alert.type === "error" ? "Error" : "Info"}</AlertTitle>
-          {alert.message}
-        </Alert>
-      )}
+        {alert.show && (
+          <Alert sx={{ mt: 2 }} severity={alert.type as "error" | "info" | "success" | "warning"}>
+            <AlertTitle>{alert.type === "error" ? "Error" : "Info"}</AlertTitle>
+            {alert.message}
+          </Alert>
+        )}
+      </Container>
     </Box>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Box,
   Typography,
@@ -16,9 +16,8 @@ import {
   Container,
   Alert,
 } from "@mui/material"
-import { Download, LocalShipping, Phone, AttachMoney, FormatListNumbered, Speed, Home } from "@mui/icons-material"
+import { Download, Phone, BarChart as BarChartIcon, Percent, AttachMoney, Warning } from "@mui/icons-material"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import axios from "axios"
 
 // Styled components
 const StyledSelect = styled(Select)({
@@ -79,53 +78,40 @@ const KPICard = ({ icon, value, label }: { icon: React.ReactNode; value: string;
 const COLORS = ["#6800E0", "#1E88E5"]
 
 // API response interface
-interface PartsDispatchData {
+interface FieldVisitData {
   totalCalls: number
-  totalPartsDispatched: number
-  totalDispatchCost: number
-  partsPerDispatch: number
-  dispatchRate: number
-  avgDispatchCost: number
-  partsRequiredPercentage: number
-  partsNotRequiredPercentage: number
-  totalParts: number
-  repeatedParts: number
-  uniqueParts: number
-  necessaryPartsCostPercentage: number
-  unnecessaryPartsCostPercentage: number
+  totalFieldVisits: number
+  fieldAttachRate: number
+  totalCost: number
+  unnecessaryVisitsCost: number
+  cruTaggedAsFruPercentage: number
+  visitRequiredPercentage: number
+  visitNotRequiredPercentage: number
+  customerReplaceable: number
+  fieldReplaceable: number
+  necessaryVisitsCostPercentage: number
+  unnecessaryVisitsCostPercentage: number
 }
 
-export default function PartsDispatchedDashboard(): React.ReactElement {
+export default function FieldVisitDashboard(): React.ReactElement {
   const [year, setYear] = useState<string>("")
   const [category, setCategory] = useState<string>("")
-  const [loading, setLoading] = useState<boolean>(true)
+  const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [dashboardData, setDashboardData] = useState<PartsDispatchData | null>(null)
-
-  // Fetch data from API
-  const fetchData = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const requestBody = year ? { year } : {}
-      const response = await axios.post("http://172.203.229.218:8082/parts-dispatch", requestBody, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      setDashboardData(response.data)
-    } catch (err) {
-      console.error("Error fetching parts dispatch data:", err)
-      setError("Failed to fetch data. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Fetch data on initial load and when year changes
-  useEffect(() => {
-    fetchData()
-  }, [year])
+  const [dashboardData, setDashboardData] = useState<FieldVisitData>({
+    totalCalls: 500,
+    totalFieldVisits: 120,
+    fieldAttachRate: 56,
+    totalCost: 94000,
+    unnecessaryVisitsCost: 2000,
+    cruTaggedAsFruPercentage: 10,
+    visitRequiredPercentage: 13,
+    visitNotRequiredPercentage: 87,
+    customerReplaceable: 372,
+    fieldReplaceable: 280,
+    necessaryVisitsCostPercentage: 77,
+    unnecessaryVisitsCostPercentage: 33,
+  })
 
   const handleSelectChange =
     (setState: React.Dispatch<React.SetStateAction<string>>) => (event: SelectChangeEvent<unknown>) => {
@@ -143,39 +129,39 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
         label: "Total Calls",
       },
       {
-        icon: <LocalShipping sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: dashboardData.totalPartsDispatched.toString(),
-        label: "Total Parts Dispatched",
+        icon: <BarChartIcon sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
+        value: dashboardData.totalFieldVisits.toString(),
+        label: "Total Field Visits",
+      },
+      {
+        icon: <Percent sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
+        value: `${dashboardData.fieldAttachRate}%`,
+        label: "Field Attach Rate",
       },
       {
         icon: <AttachMoney sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: `$${dashboardData.totalDispatchCost}`,
-        label: "Total Dispatch Cost",
+        value: `$${dashboardData.totalCost}`,
+        label: "Total Cost",
       },
       {
-        icon: <FormatListNumbered sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: dashboardData.partsPerDispatch.toFixed(0),
-        label: "Parts Per Dispatch",
+        icon: <AttachMoney sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
+        value: `$${dashboardData.unnecessaryVisitsCost}`,
+        label: "Cost of unnecessary visits",
       },
       {
-        icon: <Speed sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: `${dashboardData.dispatchRate.toFixed(0)}%`,
-        label: "Dispatch Rate",
-      },
-      {
-        icon: <Home sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: `$${dashboardData.avgDispatchCost.toFixed(2)}`,
-        label: "Average Dispatch Cost",
+        icon: <Warning sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
+        value: `${dashboardData.cruTaggedAsFruPercentage}%`,
+        label: "% of CRU were tagged as FRU",
       },
     ]
   }
 
-  // Chart data for Parts Required / Not Required
-  const getPartsRequiredData = () => {
+  // Chart data for Field Visit Required / Not Required
+  const getVisitRequiredData = () => {
     if (!dashboardData) return []
     return [
-      { name: "", value: dashboardData.partsNotRequiredPercentage },
-      { name: "", value: dashboardData.partsRequiredPercentage },
+      { name: "", value: dashboardData.visitNotRequiredPercentage },
+      { name: "", value: dashboardData.visitRequiredPercentage },
     ]
   }
 
@@ -183,18 +169,17 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   const getCostData = () => {
     if (!dashboardData) return []
     return [
-      { name: "", value: dashboardData.necessaryPartsCostPercentage },
-      { name: "", value: dashboardData.unnecessaryPartsCostPercentage },
+      { name: "", value: dashboardData.unnecessaryVisitsCostPercentage },
+      { name: "", value: dashboardData.necessaryVisitsCostPercentage },
     ]
   }
 
-  // Chart data for Unique Parts
-  const getUniquePartsData = () => {
+  // Chart data for CRU / FRU
+  const getCruFruData = () => {
     if (!dashboardData) return []
     return [
-      { name: "Total Parts", value: dashboardData.totalParts },
-      { name: "Repeated Parts", value: dashboardData.repeatedParts },
-      { name: "Unique Parts", value: dashboardData.uniqueParts },
+      { name: "Customer Replaceable", value: dashboardData.customerReplaceable },
+      { name: "Field Replaceable", value: dashboardData.fieldReplaceable },
     ]
   }
 
@@ -231,8 +216,8 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
             gap: 0.8,
           }}
         >
-          <LocalShipping sx={{ fontSize: "18px" }} />
-          Parts Dispatched
+          <BarChartIcon sx={{ fontSize: "18px" }} />
+          Field Visit
         </Typography>
 
         {/* Filters */}
@@ -256,7 +241,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
           >
             <FormControl sx={{ minWidth: { xs: "100%", sm: 180 } }}>
               <StyledSelect value={year} onChange={handleSelectChange(setYear)} displayEmpty>
-                <MenuItem value="">All Years</MenuItem>
+                <MenuItem value="">Year</MenuItem>
                 <MenuItem value="2025">2025</MenuItem>
                 <MenuItem value="2024">2024</MenuItem>
                 <MenuItem value="2023">2023</MenuItem>
@@ -264,7 +249,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
             </FormControl>
             <FormControl sx={{ minWidth: { xs: "100%", sm: 180 } }}>
               <StyledSelect value={category} onChange={handleSelectChange(setCategory)} displayEmpty>
-                <MenuItem value="">All Categories</MenuItem>
+                <MenuItem value="">Category</MenuItem>
                 <MenuItem value="hardware">Hardware</MenuItem>
                 <MenuItem value="software">Software</MenuItem>
                 <MenuItem value="network">Network</MenuItem>
@@ -326,7 +311,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                 mb: 3,
               }}
             >
-              {/* Parts Required / Not Required */}
+              {/* Field Visit Required / Not Required */}
               <Paper
                 elevation={0}
                 sx={{
@@ -337,13 +322,13 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                 }}
               >
                 <Typography variant="h6" sx={{ mb: 1, fontSize: "15px", fontWeight: 500 }}>
-                  Parts Required / Not Required
+                  Field Visit Required / Not Required
                 </Typography>
                 <Box sx={{ height: 300, position: "relative" }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={getPartsRequiredData()}
+                        data={getVisitRequiredData()}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -353,7 +338,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {getPartsRequiredData().map((entry, index) => (
+                        {getVisitRequiredData().map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -372,9 +357,9 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                     }}
                   >
                     <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                      {dashboardData.partsNotRequiredPercentage.toFixed(0)}%
+                      {dashboardData.visitRequiredPercentage}%
                     </Typography>
-                    <Typography variant="caption">Not Required</Typography>
+                    <Typography variant="caption">Visit Required</Typography>
                   </Box>
 
                   {/* Legend */}
@@ -398,7 +383,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                           backgroundColor: "#6800E0",
                         }}
                       />
-                      <Typography variant="body2">Parts Not Required</Typography>
+                      <Typography variant="body2">Visit Not Required</Typography>
                     </Box>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Box
@@ -409,13 +394,13 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                           backgroundColor: "#1E88E5",
                         }}
                       />
-                      <Typography variant="body2">Parts Required</Typography>
+                      <Typography variant="body2">Visit Required</Typography>
                     </Box>
                   </Box>
                 </Box>
               </Paper>
 
-              {/* Unique Parts */}
+              {/* CRU / FRU */}
               <Paper
                 elevation={0}
                 sx={{
@@ -426,23 +411,19 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                 }}
               >
                 <Typography variant="h6" sx={{ mb: 1, fontSize: "15px", fontWeight: 500 }}>
-                  Unique Parts
+                  CRU / FRU
                 </Typography>
                 <Box sx={{ height: 300 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getUniquePartsData()} barSize={40}>
+                    <BarChart data={getCruFruData()} barSize={40}>
                       <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                       <YAxis
                         tick={{ fontSize: 10 }}
-                        domain={[
-                          0,
-                          Math.max(dashboardData.totalParts, dashboardData.repeatedParts, dashboardData.uniqueParts) *
-                            1.2,
-                        ]}
+                        domain={[0, Math.max(dashboardData.customerReplaceable, dashboardData.fieldReplaceable) * 1.2]}
                       />
                       <Tooltip />
                       <Bar dataKey="value" fill="#6800E0" radius={[4, 4, 0, 0]}>
-                        {getUniquePartsData().map((entry, index) => (
+                        {getCruFruData().map((entry, index) => (
                           <Cell key={`cell-${index}`} fill="#6800E0" />
                         ))}
                       </Bar>
@@ -497,7 +478,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                     }}
                   >
                     <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                      ${dashboardData.totalDispatchCost}
+                      ${dashboardData.totalCost}
                     </Typography>
                     <Typography variant="caption">Total</Typography>
                   </Box>
@@ -523,7 +504,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                           backgroundColor: "#6800E0",
                         }}
                       />
-                      <Typography variant="body2">Necessary Parts</Typography>
+                      <Typography variant="body2">Unnecessary Visits</Typography>
                     </Box>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Box
@@ -534,7 +515,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                           backgroundColor: "#1E88E5",
                         }}
                       />
-                      <Typography variant="body2">Unnecessary Parts</Typography>
+                      <Typography variant="body2">Necessary Visits</Typography>
                     </Box>
                   </Box>
                 </Box>
