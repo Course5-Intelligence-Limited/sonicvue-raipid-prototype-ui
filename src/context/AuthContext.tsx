@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     clearError();
 
     try {
-      const response = await fetch("http://172.203.229.218:8082/api/auth/login", {
+      const response = await fetch("http://172.203.229.218:8080/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -142,7 +142,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     clearError();
 
     try {
-      const response = await fetch("http://172.203.229.218:8082/api/auth/signup", {
+      const response = await fetch("http://172.203.229.218:8080/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

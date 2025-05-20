@@ -184,7 +184,7 @@ export default function AgentDashboard(): React.ReactElement {
       if (callType) requestBody.callType = callType
       if (escalationStatus) requestBody.escalation = escalationStatus === "escalated" ? "Yes" : "No"
 
-      const response = await fetch("http://172.203.229.218:8082/agent-data", {
+      const response = await fetch("http://172.203.229.218:8080/agent-data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
