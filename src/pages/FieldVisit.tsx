@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import axios from "axios"
 import {
   Box,
   Typography,
@@ -9,14 +10,13 @@ import {
   Select,
   type SelectChangeEvent,
   FormControl,
-  Button,
   Paper,
   styled,
   CircularProgress,
   Container,
   Alert,
 } from "@mui/material"
-import { Download, Phone, BarChart as BarChartIcon, Percent, AttachMoney, Warning } from "@mui/icons-material"
+import { Phone, BarChart as BarChartIcon, Percent, AttachMoney, Warning, Speed } from "@mui/icons-material"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 
 // Styled components
@@ -59,6 +59,9 @@ const KPICard = ({ icon, value, label }: { icon: React.ReactNode; value: string;
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        flexShrink: 0, // Prevent the circle from shrinking
+        minWidth: "32px", // Ensure minimum width
+        minHeight: "32px", // Ensure minimum height
       }}
     >
       {icon}
@@ -78,6 +81,22 @@ const KPICard = ({ icon, value, label }: { icon: React.ReactNode; value: string;
 const COLORS = ["#6800E0", "#1E88E5"]
 
 // API response interface
+interface ApiResponse {
+  totalCalls: number
+  totalFieldVisits: number
+  fieldAttachRate: number
+  totalCost: number
+  unnecessaryVisitsCost: number
+  percentageOfCruTaggedAsFru: number
+  visitsRequiredPercentage: number
+  visitsNotRequiredPercentage: number
+  cruNumber: number
+  fruNumber: number
+  necessaryVisitsCostPercentage: number
+  unnecessaryVisitsCostPercentage: number
+}
+
+// Dashboard data interface
 interface FieldVisitData {
   totalCalls: number
   totalFieldVisits: number
@@ -96,22 +115,55 @@ interface FieldVisitData {
 export default function FieldVisitDashboard(): React.ReactElement {
   const [year, setYear] = useState<string>("")
   const [category, setCategory] = useState<string>("")
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  const [dashboardData, setDashboardData] = useState<FieldVisitData>({
-    totalCalls: 500,
-    totalFieldVisits: 120,
-    fieldAttachRate: 56,
-    totalCost: 94000,
-    unnecessaryVisitsCost: 2000,
-    cruTaggedAsFruPercentage: 10,
-    visitRequiredPercentage: 13,
-    visitNotRequiredPercentage: 87,
-    customerReplaceable: 372,
-    fieldReplaceable: 280,
-    necessaryVisitsCostPercentage: 77,
-    unnecessaryVisitsCostPercentage: 33,
-  })
+  const [dashboardData, setDashboardData] = useState<FieldVisitData | null>(null)
+
+  // Fetch data from API
+  const fetchData = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Build request body based on selected filters
+      const requestBody: { year?: string; category?: string } = {}
+      if (year) requestBody.year = year
+      if (category) requestBody.category = category
+
+      const response = await axios.post("http://172.203.229.218:8082/field-visit", requestBody, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      // Map API response to dashboard data structure
+      const apiData: ApiResponse = response.data
+      setDashboardData({
+        totalCalls: apiData.totalCalls,
+        totalFieldVisits: apiData.totalFieldVisits,
+        fieldAttachRate: apiData.fieldAttachRate,
+        totalCost: apiData.totalCost,
+        unnecessaryVisitsCost: apiData.unnecessaryVisitsCost,
+        cruTaggedAsFruPercentage: apiData.percentageOfCruTaggedAsFru,
+        visitRequiredPercentage: apiData.visitsRequiredPercentage,
+        visitNotRequiredPercentage: apiData.visitsNotRequiredPercentage,
+        customerReplaceable: apiData.cruNumber,
+        fieldReplaceable: apiData.fruNumber,
+        necessaryVisitsCostPercentage: apiData.necessaryVisitsCostPercentage,
+        unnecessaryVisitsCostPercentage: apiData.unnecessaryVisitsCostPercentage,
+      })
+    } catch (err) {
+      console.error("Error fetching field visit data:", err)
+      setError("Failed to fetch data. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch data on initial load and when filters change
+  useEffect(() => {
+    fetchData()
+  }, [year, category])
 
   const handleSelectChange =
     (setState: React.Dispatch<React.SetStateAction<string>>) => (event: SelectChangeEvent<unknown>) => {
@@ -134,8 +186,8 @@ export default function FieldVisitDashboard(): React.ReactElement {
         label: "Total Field Visits",
       },
       {
-        icon: <Percent sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: `${dashboardData.fieldAttachRate}%`,
+        icon: <Speed sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
+        value: `${dashboardData.fieldAttachRate}`,
         label: "Field Attach Rate",
       },
       {
@@ -150,7 +202,7 @@ export default function FieldVisitDashboard(): React.ReactElement {
       },
       {
         icon: <Warning sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: `${dashboardData.cruTaggedAsFruPercentage}%`,
+        value: `${dashboardData.cruTaggedAsFruPercentage.toFixed(1)}%`,
         label: "% of CRU were tagged as FRU",
       },
     ]
@@ -181,6 +233,25 @@ export default function FieldVisitDashboard(): React.ReactElement {
       { name: "Customer Replaceable", value: dashboardData.customerReplaceable },
       { name: "Field Replaceable", value: dashboardData.fieldReplaceable },
     ]
+  }
+
+  // Calculate Y-axis ticks for CRU/FRU chart
+  const getYAxisTicks = () => {
+    if (!dashboardData) return [0]
+
+    const maxValue = Math.max(dashboardData.customerReplaceable, dashboardData.fieldReplaceable)
+    const tickCount = 5 // Number of ticks to display
+    const maxTickValue = Math.ceil(maxValue * 1.2) // Add 20% padding
+
+    // Generate array of evenly spaced whole number ticks
+    const ticks = []
+    const step = Math.ceil(maxTickValue / (tickCount - 1))
+
+    for (let i = 0; i < tickCount; i++) {
+      ticks.push(i * step)
+    }
+
+    return ticks
   }
 
   // Custom label renderer for pie chart
@@ -250,30 +321,13 @@ export default function FieldVisitDashboard(): React.ReactElement {
             <FormControl sx={{ minWidth: { xs: "100%", sm: 180 } }}>
               <StyledSelect value={category} onChange={handleSelectChange(setCategory)} displayEmpty>
                 <MenuItem value="">Category</MenuItem>
+                <MenuItem value="healthcare">Healthcare</MenuItem>
                 <MenuItem value="hardware">Hardware</MenuItem>
                 <MenuItem value="software">Software</MenuItem>
                 <MenuItem value="network">Network</MenuItem>
               </StyledSelect>
             </FormControl>
           </Box>
-          {/* <Button
-            variant="contained"
-            startIcon={<Download sx={{ fontSize: "18px" }} />}
-            sx={{
-              bgcolor: "#7C3AED",
-              "&:hover": {
-                bgcolor: "#6D28D9",
-              },
-              textTransform: "none",
-              minWidth: { xs: "100%", md: "auto" },
-              borderRadius: "5px",
-              height: "36px",
-              fontSize: "13px",
-              px: 2,
-            }}
-          >
-            Download PDF
-          </Button> */}
         </Box>
 
         {error && (
@@ -357,7 +411,7 @@ export default function FieldVisitDashboard(): React.ReactElement {
                     }}
                   >
                     <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                      {dashboardData.visitRequiredPercentage}%
+                      {dashboardData.visitRequiredPercentage.toFixed(1)}%
                     </Typography>
                     <Typography variant="caption">Visit Required</Typography>
                   </Box>
@@ -417,11 +471,8 @@ export default function FieldVisitDashboard(): React.ReactElement {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={getCruFruData()} barSize={40}>
                       <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                      <YAxis
-                        tick={{ fontSize: 10 }}
-                        domain={[0, Math.max(dashboardData.customerReplaceable, dashboardData.fieldReplaceable) * 1.2]}
-                      />
-                      <Tooltip />
+                      <YAxis tick={{ fontSize: 10 }} ticks={getYAxisTicks()} allowDecimals={false} />
+                      <Tooltip formatter={(value) => [value, "Value"]} />
                       <Bar dataKey="value" fill="#6800E0" radius={[4, 4, 0, 0]}>
                         {getCruFruData().map((entry, index) => (
                           <Cell key={`cell-${index}`} fill="#6800E0" />
