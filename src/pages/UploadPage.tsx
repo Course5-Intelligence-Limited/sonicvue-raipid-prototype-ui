@@ -295,7 +295,7 @@ export default function UploadPage() {
     setFiles((prevFiles) => prevFiles.map((f) => (f.status === "Ready" ? { ...f, status: "uploading" } : f)))
 
     try {
-      const response = await axios.post("http://172.203.229.218:8080/upload", formData, {
+      const response = await axios.post("http://172.203.229.218:8082/upload", formData, {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
             const progress = (progressEvent.loaded / progressEvent.total) * 100
@@ -329,7 +329,7 @@ export default function UploadPage() {
     try {
       const uploadedFiles = files.filter((f) => f.status === "success").map((f) => f.file.name)
       setLoadingTranscripts(true)
-      const response = await axios.get("http://172.203.229.218:8080/generate-transcripts", {
+      const response = await axios.get("http://172.203.229.218:8082/generate-transcripts", {
         params: {
           files: uploadedFiles.join(","),
         },

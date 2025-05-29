@@ -108,7 +108,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
     setError(null)
     try {
       const requestBody = year ? { year } : {}
-      const response = await axios.post("http://172.203.229.218:8080/parts-dispatch", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/parts-dispatch", requestBody, {
         headers: {
           "Content-Type": "application/json",
         },

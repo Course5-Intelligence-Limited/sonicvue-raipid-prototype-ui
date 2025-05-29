@@ -198,7 +198,7 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-      const response = await axios.get("http://172.203.229.218:8080/dashboard-data", {
+      const response = await axios.get("http://172.203.229.218:8082/dashboard-data", {
 
         params: {
           modality: modality === "All" ? undefined : modality,
@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
   const fetchTableData = async () => {
     setTableLoading(true)
     try {
-      const response = await axios.get("http://172.203.229.218:8080/table-data", {
+      const response = await axios.get("http://172.203.229.218:8082/table-data", {
         params: {
           modality: modality === "All" ? undefined : modality,
           complexity: complexity === "All" ? undefined : complexity === "Medium" ? "Intermediate" : complexity,

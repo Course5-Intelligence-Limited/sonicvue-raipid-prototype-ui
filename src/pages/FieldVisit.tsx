@@ -130,7 +130,7 @@ export default function FieldVisitDashboard(): React.ReactElement {
       if (year) requestBody.year = year
       if (category) requestBody.category = category
 
-      const response = await axios.post("http://172.203.229.218:8080/field-visit", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/field-visit", requestBody, {
         headers: {
           "Content-Type": "application/json",
         },
