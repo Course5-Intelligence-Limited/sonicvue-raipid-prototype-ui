@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import {
   Box,
   Container,
@@ -39,6 +39,8 @@ import PhonePausedOutlinedIcon from "@mui/icons-material/PhonePausedOutlined"
 import MoveUpOutlinedIcon from "@mui/icons-material/MoveUpOutlined"
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined"
 import TravelExploreOutlinedIcon from "@mui/icons-material/TravelExploreOutlined"
+import { useUpload } from "../context/FileContext"
+import { AuthContext } from "../context/AuthContext"
 
 const COLORS = ["#5ED061", "#EA4D4D", "#00308F", "#FF8042"]
 const colors = ["#1877F2", "#3457D5", "#00308F"]
@@ -141,15 +143,13 @@ const DataTableCell = styled(TableCell)(({ theme }) => ({
   textOverflow: "ellipsis",
 }))
 
-// Custom label renderer for pie chart to make font smaller and position labels outside the chart
+// Custom label renderer for pie chart
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, fill }: any) => {
   const RADIAN = Math.PI / 180
-  // Increase the radius to position labels further from the pie
-  const radius = outerRadius * 1.2 // Increased from 0.8 to 1.2 to move labels outward
+  const radius = outerRadius * 1.2
   const x = cx + radius * Math.cos(-midAngle * RADIAN)
   const y = cy + radius * Math.sin(-midAngle * RADIAN)
 
-  // Add a small line connecting the pie to the label
   const lineX1 = cx + outerRadius * 0.95 * Math.cos(-midAngle * RADIAN)
   const lineY1 = cy + outerRadius * 0.95 * Math.sin(-midAngle * RADIAN)
   const lineX2 = cx + outerRadius * 1.1 * Math.cos(-midAngle * RADIAN)
@@ -157,10 +157,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
   return (
     <g>
-      {/* Line connecting pie to label */}
       <line x1={lineX1} y1={lineY1} x2={lineX2} y2={lineY2} stroke={fill} strokeWidth={1} />
-
-      {/* The label text */}
       <text x={x} y={y} fill={fill} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize="12px">
         {`${name} ${(percent * 100).toFixed(0)}%`}
       </text>
@@ -184,6 +181,26 @@ const Dashboard: React.FC = () => {
   const [selectedFilename, setSelectedFilename] = useState("")
   const [alert, setAlert] = useState({ show: false, message: "", type: "info" })
   const [tableLoading, setTableLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Get uploaded files from context and auth context
+  const { files } = useUpload()
+  const { getAuthToken } = useContext(AuthContext)
+
+  // Demo files to use when no files are uploaded
+  const demoFiles = [
+    "final_record_5.mp3",
+    "final_record_4.mp3",
+    "final_record_3.mp3",
+    "final_record_2.mp3",
+    "final_record_1.mp3",
+  ]
+
+  // Get file list for request body
+  const getFileList = () => {
+    const uploadedFiles = files.filter((f) => f.status === "success").map((f) => f.file.name)
+    return uploadedFiles.length > 0 ? uploadedFiles : demoFiles
+  }
 
   useEffect(() => {
     fetchDashboardData()
@@ -193,20 +210,47 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchDashboardData()
     fetchTableData()
-  }, [modality, complexity, eventType, toneFilter])
+  }, [modality, complexity, eventType, toneFilter, files])
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-      const response = await axios.get("http://172.203.229.218:8082/dashboard-data", {
+      const token = getAuthToken()
 
-        params: {
-          modality: modality === "All" ? undefined : modality,
-          complexity: complexity === "All" ? undefined : complexity === "Medium" ? "Intermediate" : complexity,
-          eventType: eventType === "All" ? undefined : eventType,
-          tone: toneFilter === "All" ? undefined : toneFilter,
+      // Handle null token case
+      if (!token) {
+        setError("Authentication token not found. Please log in again.")
+        setLoading(false)
+        return
+      }
+
+      // Build request body with file list and optional filters
+      const requestBody: {
+        file_list: string[]
+        complexity?: string
+        eventType?: string
+        modality?: string
+        tone?: string
+      } = {
+        file_list: getFileList(),
+      }
+
+      if (modality !== "All") requestBody.modality = modality
+      if (complexity !== "All") requestBody.complexity = complexity === "Medium" ? "Intermediate" : complexity
+      if (eventType !== "All") requestBody.eventType = eventType
+
+      console.log("Dashboard request body:", requestBody)
+
+      const response = await axios.post("http://172.203.229.218:8082/dashboard-data", requestBody, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          clientId: "synct",
+          clientSecret: "B5Ciz82LRM",
         },
       })
+
+      console.log("Dashboard API Response:", response.data)
       setDashboardData(response.data)
       setFilteredData(response.data)
     } catch (error) {
@@ -221,14 +265,32 @@ const Dashboard: React.FC = () => {
   const fetchTableData = async () => {
     setTableLoading(true)
     try {
-      const response = await axios.get("http://172.203.229.218:8082/table-data", {
-        params: {
-          modality: modality === "All" ? undefined : modality,
-          complexity: complexity === "All" ? undefined : complexity === "Medium" ? "Intermediate" : complexity,
-          eventType: eventType === "All" ? undefined : eventType,
-          tone: toneFilter,
+      const token = getAuthToken()
+
+      // Handle null token case
+      if (!token) {
+        setError("Authentication token not found. Please log in again.")
+        setTableLoading(false)
+        return
+      }
+
+      // Table data only needs file_list
+      const requestBody = {
+        file_list: getFileList(),
+      }
+
+      console.log("Table request body:", requestBody)
+
+      const response = await axios.post("http://172.203.229.218:8082/table-data", requestBody, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          clientId: "synct",
+          clientSecret: "B5Ciz82LRM",
         },
       })
+
+      console.log("Table API Response:", response.data)
       const allData = response.data || []
       setTableData(allData)
       applyFilters(allData)
@@ -244,7 +306,7 @@ const Dashboard: React.FC = () => {
   const applyFilters = (data: TableData[]) => {
     let filteredData = [...data]
 
-    if (modality !== "All") {
+    if (modality !== "All" && modality !== "Ultrasound") {
       filteredData = filteredData.filter((row) => row.modality === modality)
     }
 
@@ -408,7 +470,6 @@ const Dashboard: React.FC = () => {
       backgroundColor: "#90a4ae",
       color: "#ffffff",
     },
-    // { key: "transcript", label: "Transcript", width: "5%", backgroundColor: "#7C8F98", color: "#ffffff" },
   ]
 
   const renderKPI = (title: string, value: number, unit = "", icon: React.ReactNode) => (
@@ -543,7 +604,7 @@ const Dashboard: React.FC = () => {
     const callHoldPercentage =
       (data.reduce((sum, row) => sum + (Number.parseInt(row.hold_time?.toString() || "0") || 0), 0) /
         (data.length * 60)) *
-      100 || 0
+        100 || 0
     const escalatedCalls = (data.filter((row) => row.escalation === "Yes").length / data.length) * 100 || 0
     const resolutionConfirmation =
       (data.filter((row) => row.resolution_confirmation === "Yes").length / data.length) * 100 || 0
@@ -648,36 +709,45 @@ const Dashboard: React.FC = () => {
 
   const rootCauseAnalysis = filteredDashboardData?.root_cause_analysis
     ? [
-      {
-        category: "Root Cause Analysis",
-        HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
-        ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
-        RouteTime: filteredDashboardData.root_cause_analysis.route_time,
-      },
-    ]
+        {
+          category: "Root Cause Analysis",
+          HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
+          ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
+          RouteTime: filteredDashboardData.root_cause_analysis.route_time,
+        },
+      ]
     : []
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
       <Container maxWidth={false} sx={{ py: 2, px: 1, maxWidth: "100%", margin: "0 auto" }}>
         <Typography
-           variant="h4"
-           gutterBottom
-           sx={{
-             bgcolor: "#6800E0",
-             height: "36px",
-             color: "white",
-             fontSize: "15px",
-             p: 1.5,
-             borderRadius: 1,
-             display: "flex",
-             alignItems: "center",
-             gap: 0.8,
-           }}
+          variant="h4"
+          gutterBottom
+          sx={{
+            bgcolor: "#6800E0",
+            height: "36px",
+            color: "white",
+            fontSize: "15px",
+            p: 1.5,
+            borderRadius: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.8,
+          }}
         >
           <InsertChartOutlined sx={{ fontSize: "18px" }} />
           Call Analysis Dashboard
         </Typography>
+
+        {/* File Status Info */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ color: "#666", fontSize: "12px" }}>
+            {files.filter((f) => f.status === "success").length > 0
+              ? `Using ${files.filter((f) => f.status === "success").length} uploaded file(s)`
+              : "Using demo files (no files uploaded)"}
+          </Typography>
+        </Box>
 
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Box>
@@ -707,7 +777,7 @@ const Dashboard: React.FC = () => {
                   <MenuItem sx={{ fontSize: "12px" }} value="All">
                     All
                   </MenuItem>
-                  <MenuItem sx={{ fontSize: "12px" }} value="CT">
+                  <MenuItem sx={{ fontSize: "12px" }} value="Ultrasound">
                     Ultrasound
                   </MenuItem>
                 </Select>
@@ -729,7 +799,7 @@ const Dashboard: React.FC = () => {
                     Easy
                   </MenuItem>
                   <MenuItem sx={{ fontSize: "12px" }} value="Intermediate">
-                    Intermediate
+                    Medium
                   </MenuItem>
                   <MenuItem sx={{ fontSize: "12px" }} value="Difficult">
                     Difficult
@@ -976,10 +1046,15 @@ const Dashboard: React.FC = () => {
             {alert.message}
           </Alert>
         )}
+        {error && (
+          <Alert sx={{ mt: 2 }} severity="error">
+            <AlertTitle>Error</AlertTitle>
+            {error}
+          </Alert>
+        )}
       </Container>
     </Box>
   )
 }
 
 export default Dashboard
-

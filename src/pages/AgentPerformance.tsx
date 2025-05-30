@@ -25,7 +25,6 @@ import {
   Alert,
 } from "@mui/material"
 import {
-  Download,
   MoreVert as MoreVertIcon,
   Phone,
   Person,
@@ -36,7 +35,8 @@ import {
   HourglassEmpty,
 } from "@mui/icons-material"
 import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined"
-import { AuthContext } from "../context/AuthContext" // Adjust the import path as needed
+import { AuthContext } from "../context/AuthContext"
+import { useUpload } from "../context/FileContext" // Import the file context
 
 // Types for API response
 interface AgentStatistics {
@@ -66,34 +66,34 @@ interface DashboardData {
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   color: "white",
   fontWeight: 500,
-  padding: "8px 12px", // Reduced padding
-  fontSize: "13px", // Reduced font size
+  padding: "8px 12px",
+  fontSize: "13px",
   whiteSpace: "nowrap",
-  "&:first-of-type": { width: "50px" }, // Reduced width
-  "&:nth-of-type(2)": { width: "130px" }, // Reduced width
-  "&:nth-of-type(3)": { width: "90px" }, // Reduced width
-  "&:nth-of-type(4)": { width: "100px" }, // Reduced width
-  "&:nth-of-type(5)": { width: "130px" }, // Reduced width
-  "&:last-child": { width: "50px" }, // Reduced width
+  "&:first-of-type": { width: "50px" },
+  "&:nth-of-type(2)": { width: "130px" },
+  "&:nth-of-type(3)": { width: "90px" },
+  "&:nth-of-type(4)": { width: "100px" },
+  "&:nth-of-type(5)": { width: "130px" },
+  "&:last-child": { width: "50px" },
 }))
 
 const PercentageCell = styled(TableCell)<{ value: number }>(({ value }) => ({
-  padding: "8px 12px", // Reduced padding
-  width: "90px", // Reduced width
+  padding: "8px 12px",
+  width: "90px",
   "& .percentage": {
     backgroundColor: value >= 70 ? "rgba(46, 204, 113, 0.1)" : "rgba(255, 99, 71, 0.1)",
     color: value >= 70 ? "rgb(46, 204, 113)" : "rgb(255, 99, 71)",
-    padding: "3px 6px", // Reduced padding
+    padding: "3px 6px",
     borderRadius: "4px",
-    fontSize: "11px", // Reduced font size
+    fontSize: "11px",
     fontWeight: 500,
   },
 }))
 
 const StyledSelect = styled(Select)({
-  height: "36px", // Reduced height
+  height: "36px",
   backgroundColor: "white",
-  borderRadius: "6px", // Reduced border radius
+  borderRadius: "6px",
   "& .MuiOutlinedInput-notchedOutline": {
     borderColor: "#E5E7EB",
   },
@@ -109,14 +109,14 @@ const KPICard = ({ icon, value, label }: { icon: React.ReactNode; value: string;
   <Paper
     elevation={0}
     sx={{
-      p: 1.5, // Reduced padding
+      p: 1.5,
       border: "1px solid #E5E7EB",
-      borderRadius: "6px", // Reduced border radius
+      borderRadius: "6px",
       display: "flex",
       alignItems: "flex-start",
-      gap: 1.5, // Reduced gap
+      gap: 1.5,
       height: "100%",
-      minHeight: "80px", // Reduced min height
+      minHeight: "80px",
     }}
   >
     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mr: 0.5 }}>{icon}</Box>
@@ -144,15 +144,15 @@ const formatTime = (minutes: number): string => {
 
 // Format seconds to HH:MM:SS format
 const formatSeconds = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = Math.floor(seconds % 60)
 
   if (hours > 0) {
-    return `${hours}h ${minutes}m ${secs}s`;
+    return `${hours}h ${minutes}m ${secs}s`
   }
-  return `${minutes}m ${secs}s`;
-};
+  return `${minutes}m ${secs}s`
+}
 
 export default function AgentDashboard(): React.ReactElement {
   const [callType, setCallType] = useState("")
@@ -166,12 +166,18 @@ export default function AgentDashboard(): React.ReactElement {
   // Use the AuthContext to access authentication state and functions
   const { isAuthenticated, getAuthToken } = useContext(AuthContext)
 
+  // Use the file context to get uploaded files
+  const { files } = useUpload()
+
+  // Default file list to use when no files are uploaded
+  const defaultFileList = ["final_record_10.mp3", "final_record_11.mp3", "final_record_3 2.mp3"]
+
   const fetchData = async (retryAfterRefresh = false): Promise<void> => {
     setLoading(true)
     setError(null)
 
     try {
-      const token = getAuthToken() // Dynamically retrieve the token
+      const token = getAuthToken()
       console.log("Token being sent:", token)
 
       if (!token) {
@@ -180,27 +186,45 @@ export default function AgentDashboard(): React.ReactElement {
         return
       }
 
-      const requestBody: Record<string, string> = {}
+      // Get successfully uploaded files or use default list
+      const uploadedFiles = files.filter((file) => file.status === "success").map((file) => file.file.name)
+      const fileList = uploadedFiles.length > 0 ? uploadedFiles : defaultFileList
+
+      // Build request body with filters and file list
+      const requestBody: Record<string, any> = {
+        file_list: fileList, // Always include file_list
+      }
+
+      // Add filters if selected
       if (callType) requestBody.callType = callType
       if (escalationStatus) requestBody.escalation = escalationStatus === "escalated" ? "Yes" : "No"
+
+      console.log("Request body:", requestBody) // Debug log
 
       const response = await fetch("http://172.203.229.218:8082/agent-data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Pass the token dynamically
+          Authorization: `Bearer ${token}`,
+          clientId: "synct",
+          clientSecret: "B5Ciz82LRM",
         },
-        body: JSON.stringify(Object.keys(requestBody).length > 0 ? requestBody : {}),
+        body: JSON.stringify(requestBody),
       })
 
       if (response.status === 401 && !retryAfterRefresh) {
         console.log("Token expired. Attempting to refresh token...")
         setTokenRefreshed(true)
-        fetchData(true) // Retry with refreshed token
+        fetchData(true)
         return
       }
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log("API Response:", data) // Debug log
       setDashboardData(data)
       setTokenRefreshed(false)
     } catch (err) {
@@ -211,9 +235,8 @@ export default function AgentDashboard(): React.ReactElement {
     }
   }
 
-  // Fetch data on initial load and when filters change
+  // Fetch data on initial load and when filters or files change
   useEffect(() => {
-    // Only fetch if the user is authenticated
     if (isAuthenticated) {
       const token = getAuthToken()
       if (!token) {
@@ -223,7 +246,7 @@ export default function AgentDashboard(): React.ReactElement {
 
       fetchData()
     }
-  }, [callType, escalationStatus, qualityScore, isAuthenticated])
+  }, [callType, escalationStatus, qualityScore, isAuthenticated, files]) // Added files dependency
 
   const handleSelectChange =
     (setState: React.Dispatch<React.SetStateAction<string>>) => (event: SelectChangeEvent<unknown>) => {
@@ -240,8 +263,8 @@ export default function AgentDashboard(): React.ReactElement {
 
   // Generate KPI cards data from API response
   const getKpiData = () => {
-    if (!dashboardData) return [];
-  
+    if (!dashboardData) return []
+
     return [
       {
         icon: <Phone sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
@@ -278,8 +301,8 @@ export default function AgentDashboard(): React.ReactElement {
         value: formatSeconds(dashboardData.averageHoldTime),
         label: "Average hold time",
       },
-    ];
-  };
+    ]
+  }
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
@@ -289,17 +312,17 @@ export default function AgentDashboard(): React.ReactElement {
           gutterBottom
           sx={{
             bgcolor: "#6800E0",
-            height: "36px", // Reduced height
+            height: "36px",
             color: "white",
-            fontSize: "15px", // Reduced font size
-            p: 1.5, // Reduced padding
+            fontSize: "15px",
+            p: 1.5,
             borderRadius: 1,
             display: "flex",
             alignItems: "center",
-            gap: 0.8, // Reduced gap
+            gap: 0.8,
           }}
         >
-          <SupportAgentOutlinedIcon sx={{ fontSize: "18px" }} /> {/* Reduced icon size */}
+          <SupportAgentOutlinedIcon sx={{ fontSize: "18px" }} />
           Agent Performance
         </Typography>
 
@@ -308,8 +331,8 @@ export default function AgentDashboard(): React.ReactElement {
           sx={{
             display: "flex",
             flexDirection: { xs: "column", lg: "row" },
-            gap: 1.5, // Reduced gap
-            mb: 2, // Reduced margin
+            gap: 1.5,
+            mb: 2,
             alignItems: { xs: "stretch", lg: "center" },
           }}
         >
@@ -317,7 +340,7 @@ export default function AgentDashboard(): React.ReactElement {
             sx={{
               display: "flex",
               flexDirection: { xs: "column", sm: "row" },
-              gap: 1.5, // Reduced gap
+              gap: 1.5,
               flex: 1,
               flexWrap: { sm: "wrap", lg: "nowrap" },
             }}
@@ -366,24 +389,6 @@ export default function AgentDashboard(): React.ReactElement {
               </StyledSelect>
             </FormControl>
           </Box>
-          {/* <Button
-            variant="contained"
-            startIcon={<Download sx={{ fontSize: "18px" }} />}
-            sx={{
-              bgcolor: "#7C3AED",
-              "&:hover": {
-                bgcolor: "#6D28D9",
-              },
-              textTransform: "none",
-              minWidth: { xs: "100%", md: "auto" },
-              borderRadius: "5px",
-              height: "36px", // Reduced height
-              fontSize: "13px", // Reduced font size
-              px: 2, // Reduced padding
-            }}
-          >
-            Download PDF
-          </Button> */}
         </Box>
 
         {tokenRefreshed && (
@@ -413,8 +418,8 @@ export default function AgentDashboard(): React.ReactElement {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", // Reduced min width
-                gap: 1.5, // Reduced gap
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                gap: 1.5,
                 mb: 3,
               }}
             >
@@ -432,16 +437,16 @@ export default function AgentDashboard(): React.ReactElement {
               component={Paper}
               sx={{
                 border: "1px solid #E5E7EB",
-                borderRadius: "6px", // Reduced border radius
-                mb: 2.5, // Reduced margin
+                borderRadius: "6px",
+                mb: 2.5,
                 maxWidth: "100%",
                 overflowX: "auto",
                 "&::-webkit-scrollbar": {
-                  height: "6px", // Reduced scrollbar height
+                  height: "6px",
                 },
                 "&::-webkit-scrollbar-thumb": {
                   backgroundColor: "#E5E7EB",
-                  borderRadius: "3px", // Reduced border radius
+                  borderRadius: "3px",
                 },
               }}
             >
@@ -468,7 +473,7 @@ export default function AgentDashboard(): React.ReactElement {
                           backgroundColor: "#000000",
                           color: "white",
                           fontWeight: 600,
-                          fontSize: "13px", // Reduced font size
+                          fontSize: "13px",
                         }}
                       >
                         {header}

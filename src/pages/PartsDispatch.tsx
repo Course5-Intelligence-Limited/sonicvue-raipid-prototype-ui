@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import {
   Box,
   Typography,
@@ -9,16 +9,17 @@ import {
   Select,
   type SelectChangeEvent,
   FormControl,
-  Button,
   Paper,
   styled,
   CircularProgress,
   Container,
   Alert,
 } from "@mui/material"
-import { Download, LocalShipping, Phone, AttachMoney, FormatListNumbered, Speed, Home } from "@mui/icons-material"
+import { LocalShipping, Phone, AttachMoney, FormatListNumbered, Speed, Home } from "@mui/icons-material"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import axios from "axios"
+import { useUpload } from "../context/FileContext"
+import { AuthContext } from "../context/AuthContext"
 
 // Styled components
 const StyledSelect = styled(Select)({
@@ -102,30 +103,76 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   const [error, setError] = useState<string | null>(null)
   const [dashboardData, setDashboardData] = useState<PartsDispatchData | null>(null)
 
+  // Get uploaded files from context and auth context
+  const { files } = useUpload()
+  const { getAuthToken } = useContext(AuthContext)
+
+  // Demo files to use when no files are uploaded
+  const demoFiles = [
+    "final_record_10.mp3", "final_record_11.mp3", "final_record_3 2.mp3"
+  ]
+
+  // Get file list for request body
+  const getFileList = () => {
+    const uploadedFiles = files.filter((f) => f.status === "success").map((f) => f.file.name)
+    return uploadedFiles.length > 0 ? uploadedFiles : demoFiles
+  }
+
   // Fetch data from API
   const fetchData = async () => {
     setLoading(true)
     setError(null)
     try {
-      const requestBody = year ? { year } : {}
+      const token = getAuthToken()
+
+      // Handle null token case
+      if (!token) {
+        setError("Authentication token not found. Please log in again.")
+        setLoading(false)
+        return
+      }
+
+      // Prepare request body with file list and optional year
+      const requestBody: { file_list: string[]; year?: string } = {
+        file_list: getFileList(),
+      }
+
+      // Add year to request body if selected
+      if (year) {
+        requestBody.year = year
+      }
+
+      console.log("Sending request body:", requestBody)
+
       const response = await axios.post("http://172.203.229.218:8082/parts-dispatch", requestBody, {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          clientId: "synct",
+          clientSecret: "B5Ciz82LRM",
         },
       })
+
+      console.log("API Response received:", response.data)
       setDashboardData(response.data)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching parts dispatch data:", err)
-      setError("Failed to fetch data. Please try again.")
+      if (err.response) {
+        setError(`Server error: ${err.response.status} - ${err.response.data?.message || err.response.statusText}`)
+      } else if (err.request) {
+        setError("No response from server. Please check your network connection.")
+      } else {
+        setError(`Request failed: ${err.message}`)
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  // Fetch data on initial load and when year changes
+  // Fetch data on initial load and when year or files change
   useEffect(() => {
     fetchData()
-  }, [year])
+  }, [year, files])
 
   const handleSelectChange =
     (setState: React.Dispatch<React.SetStateAction<string>>) => (event: SelectChangeEvent<unknown>) => {
@@ -139,32 +186,32 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
     return [
       {
         icon: <Phone sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: dashboardData.totalCalls.toString(),
+        value: dashboardData.totalCalls?.toString() || "0",
         label: "Total Calls",
       },
       {
         icon: <LocalShipping sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: dashboardData.totalPartsDispatched.toString(),
+        value: dashboardData.totalPartsDispatched?.toString() || "0",
         label: "Total Parts Dispatched",
       },
       {
         icon: <AttachMoney sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: `$${dashboardData.totalDispatchCost}`,
+        value: `$${dashboardData.totalDispatchCost || 0}`,
         label: "Total Dispatch Cost",
       },
       {
         icon: <FormatListNumbered sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: dashboardData.partsPerDispatch.toFixed(0),
+        value: dashboardData.partsPerDispatch?.toFixed(0) || "0",
         label: "Parts Per Dispatch",
       },
       {
         icon: <Speed sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: `${dashboardData.dispatchRate.toFixed(0)}%`,
+        value: `${dashboardData.dispatchRate?.toFixed(0) || 0}%`,
         label: "Dispatch Rate",
       },
       {
         icon: <Home sx={{ color: "#6C2BD9", fontSize: "18px" }} />,
-        value: `$${dashboardData.avgDispatchCost.toFixed(2)}`,
+        value: `$${dashboardData.avgDispatchCost?.toFixed(2) || 0}`,
         label: "Average Dispatch Cost",
       },
     ]
@@ -174,8 +221,8 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   const getPartsRequiredData = () => {
     if (!dashboardData) return []
     return [
-      { name: "", value: dashboardData.partsNotRequiredPercentage },
-      { name: "", value: dashboardData.partsRequiredPercentage },
+      { name: "Not Required", value: dashboardData.partsNotRequiredPercentage || 0 },
+      { name: "Required", value: dashboardData.partsRequiredPercentage || 0 },
     ]
   }
 
@@ -183,8 +230,8 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   const getCostData = () => {
     if (!dashboardData) return []
     return [
-      { name: "", value: dashboardData.necessaryPartsCostPercentage },
-      { name: "", value: dashboardData.unnecessaryPartsCostPercentage },
+      { name: "Necessary", value: dashboardData.necessaryPartsCostPercentage || 0 },
+      { name: "Unnecessary", value: dashboardData.unnecessaryPartsCostPercentage || 0 },
     ]
   }
 
@@ -192,15 +239,15 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   const getUniquePartsData = () => {
     if (!dashboardData) return []
     return [
-      { name: "Total Parts", value: dashboardData.totalParts },
-      { name: "Repeated Parts", value: dashboardData.repeatedParts },
-      { name: "Unique Parts", value: dashboardData.uniqueParts },
+      { name: "Total Parts", value: dashboardData.totalParts || 0 },
+      { name: "Repeated Parts", value: dashboardData.repeatedParts || 0 },
+      { name: "Unique Parts", value: dashboardData.uniqueParts || 0 },
     ]
   }
 
   // Custom label renderer for pie chart
   const renderCustomizedLabel = (props: any) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, percent, index, name } = props
+    const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props
     const RADIAN = Math.PI / 180
     const radius = outerRadius * 1.1
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
@@ -234,6 +281,15 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
           <LocalShipping sx={{ fontSize: "18px" }} />
           Parts Dispatched
         </Typography>
+
+        {/* File Status Info */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ color: "#666", fontSize: "12px" }}>
+            {files.filter((f) => f.status === "success").length > 0
+              ? `Using ${files.filter((f) => f.status === "success").length} uploaded file(s)`
+              : "Using demo files (no files uploaded)"}
+          </Typography>
+        </Box>
 
         {/* Filters */}
         <Box
@@ -271,24 +327,6 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
               </StyledSelect>
             </FormControl>
           </Box>
-          {/* <Button
-            variant="contained"
-            startIcon={<Download sx={{ fontSize: "18px" }} />}
-            sx={{
-              bgcolor: "#7C3AED",
-              "&:hover": {
-                bgcolor: "#6D28D9",
-              },
-              textTransform: "none",
-              minWidth: { xs: "100%", md: "auto" },
-              borderRadius: "5px",
-              height: "36px",
-              fontSize: "13px",
-              px: 2,
-            }}
-          >
-            Download PDF
-          </Button> */}
         </Box>
 
         {error && (
@@ -372,7 +410,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                     }}
                   >
                     <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                      {dashboardData.partsNotRequiredPercentage.toFixed(0)}%
+                      {dashboardData.partsNotRequiredPercentage?.toFixed(0) || 0}%
                     </Typography>
                     <Typography variant="caption">Not Required</Typography>
                   </Box>
@@ -436,8 +474,11 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                         tick={{ fontSize: 10 }}
                         domain={[
                           0,
-                          Math.max(dashboardData.totalParts, dashboardData.repeatedParts, dashboardData.uniqueParts) *
-                            1.2,
+                          Math.max(
+                            dashboardData.totalParts || 0,
+                            dashboardData.repeatedParts || 0,
+                            dashboardData.uniqueParts || 0,
+                          ) * 1.2,
                         ]}
                       />
                       <Tooltip />
@@ -497,7 +538,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
                     }}
                   >
                     <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                      ${dashboardData.totalDispatchCost}
+                      ${dashboardData.totalDispatchCost || 0}
                     </Typography>
                     <Typography variant="caption">Total</Typography>
                   </Box>
@@ -541,7 +582,13 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
               </Paper>
             </Box>
           </>
-        ) : null}
+        ) : (
+          <Box sx={{ textAlign: "center", py: 4 }}>
+            <Typography variant="h6" color="text.secondary">
+              No data available
+            </Typography>
+          </Box>
+        )}
       </Container>
     </Box>
   )

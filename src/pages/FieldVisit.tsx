@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import axios from "axios"
 import {
   Box,
@@ -16,8 +16,10 @@ import {
   Container,
   Alert,
 } from "@mui/material"
-import { Phone, BarChart as BarChartIcon, Percent, AttachMoney, Warning, Speed } from "@mui/icons-material"
+import { Phone, BarChart as BarChartIcon, Speed, AttachMoney, Warning } from "@mui/icons-material"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { useUpload } from "../context/FileContext"
+import { AuthContext } from "../context/AuthContext"
 
 // Styled components
 const StyledSelect = styled(Select)({
@@ -59,9 +61,9 @@ const KPICard = ({ icon, value, label }: { icon: React.ReactNode; value: string;
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        flexShrink: 0, // Prevent the circle from shrinking
-        minWidth: "32px", // Ensure minimum width
-        minHeight: "32px", // Ensure minimum height
+        flexShrink: 0,
+        minWidth: "32px",
+        minHeight: "32px",
       }}
     >
       {icon}
@@ -119,22 +121,56 @@ export default function FieldVisitDashboard(): React.ReactElement {
   const [error, setError] = useState<string | null>(null)
   const [dashboardData, setDashboardData] = useState<FieldVisitData | null>(null)
 
+  // Get uploaded files from context and auth context
+  const { files } = useUpload()
+  const { getAuthToken } = useContext(AuthContext)
+
+  // Demo files to use when no files are uploaded
+  const demoFiles = [
+    "final_record_10.mp3", "final_record_11.mp3", "final_record_3 2.mp3"
+  ]
+
+  // Get file list for request body
+  const getFileList = () => {
+    const uploadedFiles = files.filter((f) => f.status === "success").map((f) => f.file.name)
+    return uploadedFiles.length > 0 ? uploadedFiles : demoFiles
+  }
+
   // Fetch data from API
   const fetchData = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      // Build request body based on selected filters
-      const requestBody: { year?: string; category?: string } = {}
+      const token = getAuthToken()
+
+      // Handle null token case
+      if (!token) {
+        setError("Authentication token not found. Please log in again.")
+        setLoading(false)
+        return
+      }
+
+      // Build request body with file list and optional filters
+      const requestBody: { file_list: string[]; year?: string; category?: string } = {
+        file_list: getFileList(),
+      }
+
       if (year) requestBody.year = year
       if (category) requestBody.category = category
+
+      console.log("Sending request body:", requestBody)
 
       const response = await axios.post("http://172.203.229.218:8082/field-visit", requestBody, {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          clientId: "synct",
+          clientSecret: "B5Ciz82LRM",
         },
       })
+
+      console.log("API Response:", response.data)
 
       // Map API response to dashboard data structure
       const apiData: ApiResponse = response.data
@@ -152,18 +188,24 @@ export default function FieldVisitDashboard(): React.ReactElement {
         necessaryVisitsCostPercentage: apiData.necessaryVisitsCostPercentage,
         unnecessaryVisitsCostPercentage: apiData.unnecessaryVisitsCostPercentage,
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching field visit data:", err)
-      setError("Failed to fetch data. Please try again.")
+      if (err.response) {
+        setError(`Server error: ${err.response.status} - ${err.response.data?.message || err.response.statusText}`)
+      } else if (err.request) {
+        setError("No response from server. Please check your network connection.")
+      } else {
+        setError(`Request failed: ${err.message}`)
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  // Fetch data on initial load and when filters change
+  // Fetch data on initial load and when filters or files change
   useEffect(() => {
     fetchData()
-  }, [year, category])
+  }, [year, category, files])
 
   const handleSelectChange =
     (setState: React.Dispatch<React.SetStateAction<string>>) => (event: SelectChangeEvent<unknown>) => {
@@ -212,8 +254,8 @@ export default function FieldVisitDashboard(): React.ReactElement {
   const getVisitRequiredData = () => {
     if (!dashboardData) return []
     return [
-      { name: "", value: dashboardData.visitNotRequiredPercentage },
-      { name: "", value: dashboardData.visitRequiredPercentage },
+      { name: "Not Required", value: dashboardData.visitNotRequiredPercentage },
+      { name: "Required", value: dashboardData.visitRequiredPercentage },
     ]
   }
 
@@ -221,8 +263,8 @@ export default function FieldVisitDashboard(): React.ReactElement {
   const getCostData = () => {
     if (!dashboardData) return []
     return [
-      { name: "", value: dashboardData.unnecessaryVisitsCostPercentage },
-      { name: "", value: dashboardData.necessaryVisitsCostPercentage },
+      { name: "Unnecessary", value: dashboardData.unnecessaryVisitsCostPercentage },
+      { name: "Necessary", value: dashboardData.necessaryVisitsCostPercentage },
     ]
   }
 
@@ -240,10 +282,9 @@ export default function FieldVisitDashboard(): React.ReactElement {
     if (!dashboardData) return [0]
 
     const maxValue = Math.max(dashboardData.customerReplaceable, dashboardData.fieldReplaceable)
-    const tickCount = 5 // Number of ticks to display
-    const maxTickValue = Math.ceil(maxValue * 1.2) // Add 20% padding
+    const tickCount = 5
+    const maxTickValue = Math.ceil(maxValue * 1.2)
 
-    // Generate array of evenly spaced whole number ticks
     const ticks = []
     const step = Math.ceil(maxTickValue / (tickCount - 1))
 
@@ -256,7 +297,7 @@ export default function FieldVisitDashboard(): React.ReactElement {
 
   // Custom label renderer for pie chart
   const renderCustomizedLabel = (props: any) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, percent, index, name } = props
+    const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props
     const RADIAN = Math.PI / 180
     const radius = outerRadius * 1.1
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
@@ -290,6 +331,15 @@ export default function FieldVisitDashboard(): React.ReactElement {
           <BarChartIcon sx={{ fontSize: "18px" }} />
           Field Visit
         </Typography>
+
+        {/* File Status Info */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ color: "#666", fontSize: "12px" }}>
+            {files.filter((f) => f.status === "success").length > 0
+              ? `Using ${files.filter((f) => f.status === "success").length} uploaded file(s)`
+              : "Using demo files (no files uploaded)"}
+          </Typography>
+        </Box>
 
         {/* Filters */}
         <Box
@@ -573,7 +623,13 @@ export default function FieldVisitDashboard(): React.ReactElement {
               </Paper>
             </Box>
           </>
-        ) : null}
+        ) : (
+          <Box sx={{ textAlign: "center", py: 4 }}>
+            <Typography variant="h6" color="text.secondary">
+              No data available
+            </Typography>
+          </Box>
+        )}
       </Container>
     </Box>
   )
