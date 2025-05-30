@@ -71,7 +71,7 @@ const HomePage: React.FC = () => {
       console.log("Fetching insights for files:", fileList) // Debug log
 
       const response = await axios.post(
-        "http://172.203.229.218:8082/landing-insights",
+        "http://172.203.229.218:8080/landing-insights",
         {
           file_list: fileList,
         },

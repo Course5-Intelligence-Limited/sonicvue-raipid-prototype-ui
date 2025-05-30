@@ -201,7 +201,7 @@ export default function AgentDashboard(): React.ReactElement {
 
       console.log("Request body:", requestBody) // Debug log
 
-      const response = await fetch("http://172.203.229.218:8082/agent-data", {
+      const response = await fetch("http://172.203.229.218:8080/agent-data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
