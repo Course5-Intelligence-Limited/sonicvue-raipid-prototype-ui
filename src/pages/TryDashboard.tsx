@@ -241,7 +241,7 @@ const Dashboard: React.FC = () => {
 
       console.log("Dashboard request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8080/dashboard-data", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/dashboard-data", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -281,7 +281,7 @@ const Dashboard: React.FC = () => {
 
       console.log("Table request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8080/table-data", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/table-data", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

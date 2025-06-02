@@ -144,7 +144,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
 
       console.log("Sending request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8080/parts-dispatch", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/parts-dispatch", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
