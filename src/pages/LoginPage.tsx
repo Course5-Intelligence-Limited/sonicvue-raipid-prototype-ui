@@ -725,14 +725,14 @@ const LoginPage: React.FC = () => {
                     />
 
                     <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-                      <Typography
+                      {/* <Typography
                         variant="body2"
                         color="#6800E0"
                         sx={{ cursor: "pointer" }}
-                        // onClick={handleForgotPasswordClick}
+                        onClick={handleForgotPasswordClick}
                       >
                         Forgot Password?
-                      </Typography>
+                      </Typography> */}
                     </Box>
 
                     <PrimaryButton type="submit" fullWidth variant="contained" disabled={loading}>
