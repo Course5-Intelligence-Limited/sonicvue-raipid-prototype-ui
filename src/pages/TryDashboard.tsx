@@ -11,7 +11,6 @@ import {
   Select,
   MenuItem,
   FormControl,
-  Button,
   Chip,
   Table,
   TableBody,
@@ -28,6 +27,7 @@ import {
   IconButton,
   Alert,
   AlertTitle,
+  Button,
 } from "@mui/material"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { InsertChartOutlined, Close, TextSnippet, GetApp } from "@mui/icons-material"
@@ -82,18 +82,10 @@ interface DashboardData {
     digital_service: number
     field_visits: number
   }
-  [key: string]: any
 }
 
 interface TableData {
   [key: string]: string | number | boolean | undefined
-  key: string
-  label: string
-  width: string
-  backgroundColor: string
-  color: string
-  transcript?: string
-  transcriptStatus?: string
   filename?: string
   call_time?: string
   hold_time?: string
@@ -118,11 +110,18 @@ interface TableData {
   parts_dispatch?: string
   field_service?: string
   digital_service?: string
-  modality?: string
-  event_type?: string
+  transcript?: string
 }
 
-const StyledTableCell = styled(TableCell)<{ config: TableData }>(({ theme, config }) => ({
+interface TableColumn {
+  key: string
+  label: string
+  width: string
+  backgroundColor: string
+  color: string
+}
+
+const StyledTableCell = styled(TableCell)<{ config: TableColumn }>(({ theme, config }) => ({
   backgroundColor: config.backgroundColor,
   color: config.color,
   width: config.width,
@@ -143,7 +142,6 @@ const DataTableCell = styled(TableCell)(({ theme }) => ({
   textOverflow: "ellipsis",
 }))
 
-// Custom label renderer for pie chart
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, fill }: any) => {
   const RADIAN = Math.PI / 180
   const radius = outerRadius * 1.2
@@ -168,35 +166,29 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [tableData, setTableData] = useState<TableData[]>([])
-  const [filteredData, setFilteredData] = useState<DashboardData | null>(null)
-  const [filteredTableData, setFilteredTableData] = useState<TableData[]>([])
   const [activeFilter, setActiveFilter] = useState<{ category: string; value: string } | null>(null)
   const [modality, setModality] = useState("All")
   const [complexity, setComplexity] = useState("All")
   const [eventType, setEventType] = useState("All")
-  const [toneFilter, setToneFilter] = useState<string | null>("All")
   const [loading, setLoading] = useState(true)
+  const [tableLoading, setTableLoading] = useState(true)
   const [openTranscriptDialog, setOpenTranscriptDialog] = useState(false)
   const [selectedTranscript, setSelectedTranscript] = useState("")
   const [selectedFilename, setSelectedFilename] = useState("")
   const [alert, setAlert] = useState({ show: false, message: "", type: "info" })
-  const [tableLoading, setTableLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Get uploaded files from context and auth context
   const { files } = useUpload()
   const { getAuthToken } = useContext(AuthContext)
 
-  // Demo files to use when no files are uploaded
   const demoFiles = [
     "field_visit_1.mp3",
     "parts_dispatch_1.mp3",
     "call_efficiency_2.mp3",
     "call_efficiency_1.mp3",
-    "call_efficiency_3.mp3"
+    "call_efficiency_3.mp3",
   ]
 
-  // Get file list for request body
   const getFileList = () => {
     const uploadedFiles = files.filter((f) => f.status === "success").map((f) => f.file.name)
     return uploadedFiles.length > 0 ? uploadedFiles : demoFiles
@@ -205,32 +197,24 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchDashboardData()
     fetchTableData()
-  }, [])
-
-  useEffect(() => {
-    fetchDashboardData()
-    fetchTableData()
-  }, [modality, complexity, eventType, toneFilter, files])
+  }, [modality, complexity, eventType, files])
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
       const token = getAuthToken()
 
-      // Handle null token case
       if (!token) {
         setError("Authentication token not found. Please log in again.")
         setLoading(false)
         return
       }
 
-      // Build request body with file list and optional filters
       const requestBody: {
         file_list: string[]
         complexity?: string
         eventType?: string
         modality?: string
-        tone?: string
       } = {
         file_list: getFileList(),
       }
@@ -238,8 +222,6 @@ const Dashboard: React.FC = () => {
       if (modality !== "All") requestBody.modality = modality
       if (complexity !== "All") requestBody.complexity = complexity === "Medium" ? "Intermediate" : complexity
       if (eventType !== "All") requestBody.eventType = eventType
-
-      console.log("Dashboard request body:", requestBody)
 
       const response = await axios.post("http://172.203.229.218:8082/dashboard-data", requestBody, {
         headers: {
@@ -250,13 +232,10 @@ const Dashboard: React.FC = () => {
         },
       })
 
-      console.log("Dashboard API Response:", response.data)
       setDashboardData(response.data)
-      setFilteredData(response.data)
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
       setDashboardData(null)
-      setFilteredData(null)
     } finally {
       setLoading(false)
     }
@@ -267,19 +246,15 @@ const Dashboard: React.FC = () => {
     try {
       const token = getAuthToken()
 
-      // Handle null token case
       if (!token) {
         setError("Authentication token not found. Please log in again.")
         setTableLoading(false)
         return
       }
 
-      // Table data only needs file_list
       const requestBody = {
         file_list: getFileList(),
       }
-
-      console.log("Table request body:", requestBody)
 
       const response = await axios.post("http://172.203.229.218:8082/table-data", requestBody, {
         headers: {
@@ -290,44 +265,13 @@ const Dashboard: React.FC = () => {
         },
       })
 
-      console.log("Table API Response:", response.data)
-      const allData = response.data || []
-      setTableData(allData)
-      applyFilters(allData)
+      setTableData(response.data || [])
     } catch (error) {
       console.error("Error fetching table data:", error)
       setTableData([])
-      setFilteredTableData([])
     } finally {
       setTableLoading(false)
     }
-  }
-
-  const applyFilters = (data: TableData[]) => {
-    let filteredData = [...data]
-
-    if (modality !== "All" && modality !== "Ultrasound") {
-      filteredData = filteredData.filter((row) => row.modality === modality)
-    }
-
-    if (complexity !== "All") {
-      filteredData = filteredData.filter((row) => {
-        if (complexity === "Medium") {
-          return row.complexity === "Intermediate"
-        }
-        return row.complexity === complexity
-      })
-    }
-
-    if (eventType !== "All") {
-      filteredData = filteredData.filter((row) => row.call_type === eventType)
-    }
-
-    if (toneFilter !== "All") {
-      filteredData = filteredData.filter((row) => row.call_tone === toneFilter)
-    }
-
-    setFilteredTableData(filteredData)
   }
 
   const applyFilter = (category: string, value: string) => {
@@ -336,7 +280,6 @@ const Dashboard: React.FC = () => {
       setModality("All")
       setComplexity("All")
       setEventType("All")
-      setToneFilter("All")
     } else {
       setActiveFilter({ category, value })
       switch (category) {
@@ -349,15 +292,11 @@ const Dashboard: React.FC = () => {
         case "Event Type":
           setEventType(value)
           break
-        case "Tone of Customer":
-          setToneFilter(value)
-          break
       }
     }
   }
 
-  const handleOpenTranscript = (transcript: string | undefined, status: string | undefined, filename: string) => {
-    console.log("Opening transcript:", transcript ? transcript.substring(0, 100) + "..." : "No transcript")
+  const handleOpenTranscript = (transcript: string | undefined, filename: string) => {
     if (transcript) {
       setSelectedTranscript(transcript)
       setSelectedFilename(filename)
@@ -397,7 +336,7 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  const columns: TableData[] = [
+  const columns: TableColumn[] = [
     { key: "filename", label: "File Name", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
     { key: "call_time", label: "Call Time (Sec)", width: "8%", backgroundColor: "#7C8F98", color: "#ffffff" },
     { key: "hold_time", label: "Hold Time (Sec)", width: "8%", backgroundColor: "#90a4ae", color: "#ffffff" },
@@ -496,13 +435,7 @@ const Dashboard: React.FC = () => {
     const { title, data, chartType = "Bar", colors: chartColors = colors } = chartConfig
 
     const handleChartClick = (entry: any) => {
-      if (title === "Tone of Customer") {
-        applyFilter(title, entry.name)
-      } else if (title === "Event Type") {
-        applyFilter(title, entry.name)
-      } else {
-        applyFilter(title, entry.name)
-      }
+      applyFilter(title, entry.name)
     }
 
     return (
@@ -596,127 +529,62 @@ const Dashboard: React.FC = () => {
     )
   }
 
-  const calculateFilteredData = (data: TableData[]) => {
-    const totalCalls = data.length
-    const callRoutingAccuracy =
-      data.length > 0 ? (data.filter((row) => row.call_quality === "Good").length / data.length) * 100 : 0
-    const multipleAgents = (data.filter((row) => row.multiple_agents === "Yes").length / data.length) * 100 || 0
-    const callHoldPercentage =
-      (data.reduce((sum, row) => sum + (Number.parseInt(row.hold_time?.toString() || "0") || 0), 0) /
-        (data.length * 60)) *
-      100 || 0
-    const escalatedCalls = (data.filter((row) => row.escalation === "Yes").length / data.length) * 100 || 0
-    const resolutionConfirmation =
-      (data.filter((row) => row.resolution_confirmation === "Yes").length / data.length) * 100 || 0
-    const csPortalRecommended =
-      (data.filter((row) => row.cs_portal_recommended === "Yes").length / data.length) * 100 || 0
-
-    const easyCalls = data.filter((row) => row.complexity === "Easy").length
-    const intermediateCalls = data.filter((row) => row.complexity === "Intermediate").length
-    const difficultCalls = data.filter((row) => row.complexity === "Difficult").length
-
-    const greetingCalls = data.filter((row) => row.greeting !== "").length
-    const phoneNumberCalls = data.filter((row) => row.phone_number !== "").length
-    const emailCalls = data.filter((row) => row.email_address !== "").length
-
-    const positiveCalls = data.filter((row) => row.call_tone === "Positive").length
-    const negativeCalls = data.filter((row) => row.call_tone === "Negative").length
-
-    const eventTypeCounts: { [key: string]: number } = {}
-    data.forEach((row) => {
-      const eventType = (row.call_type as string) || "Unknown"
-      eventTypeCounts[eventType] = (eventTypeCounts[eventType] || 0) + 1
-    })
-
-    const totalHoldTime = data.reduce((sum, row) => sum + (Number.parseInt(row.hold_time?.toString() || "0") || 0), 0)
-    const totalResolutionTime = data.reduce(
-      (sum, row) => sum + (Number.parseInt(row.resolution_time?.toString() || "0") || 0),
-      0,
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+        <CircularProgress />
+      </Box>
     )
-    const totalRouteTime = data.reduce((sum, row) => sum + (Number.parseInt(row.route_time?.toString() || "0") || 0), 0)
-
-    const partsRequestCalls = data.filter((row) => row.part_request === "Yes").length
-    const digitalServiceCalls = data.filter((row) => row.digital_service === "Yes").length
-    const fieldVisitsCalls = data.filter((row) => row.field_service === "Yes").length
-
-    return {
-      summary: {
-        total_calls: totalCalls,
-        call_routing_accuracy: callRoutingAccuracy,
-        multiple_agents: multipleAgents,
-        call_hold_percentage: callHoldPercentage,
-        escalated_calls: escalatedCalls,
-        resolution_confirmation: resolutionConfirmation,
-        cs_portal_recommended: csPortalRecommended,
-      },
-      complexity: {
-        easy: easyCalls,
-        intermediate: intermediateCalls,
-        difficult: difficultCalls,
-      },
-      call_hygiene: {
-        greeting: greetingCalls,
-        phone_number: phoneNumberCalls,
-        email: emailCalls,
-      },
-      tone_conversation: {
-        positive: positiveCalls,
-        negative: negativeCalls,
-      },
-      event_type: eventTypeCounts,
-      root_cause_analysis: {
-        hold_time: totalHoldTime,
-        resolution_time: totalResolutionTime,
-        route_time: totalRouteTime,
-      },
-      customer_service: {
-        parts_request: partsRequestCalls,
-        digital_service: digitalServiceCalls,
-        field_visits: fieldVisitsCalls,
-      },
-    }
   }
 
-  const filteredDashboardData = calculateFilteredData(filteredTableData)
+  if (!dashboardData) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Alert severity="error">
+          <AlertTitle>Error</AlertTitle>
+          Failed to load dashboard data. Please try again.
+        </Alert>
+      </Box>
+    )
+  }
 
+  // Prepare chart data from backend response
   const callComplexityData = [
-    { name: "Easy", value: filteredDashboardData?.complexity?.easy || 0 },
-    { name: "Medium", value: filteredDashboardData?.complexity?.intermediate || 0 },
-    { name: "Difficult", value: filteredDashboardData?.complexity?.difficult || 0 },
+    { name: "Easy", value: dashboardData.complexity.easy },
+    { name: "Medium", value: dashboardData.complexity.intermediate },
+    { name: "Difficult", value: dashboardData.complexity.difficult },
   ]
 
   const callHygieneData = [
-    { name: "Greeting", value: filteredDashboardData?.call_hygiene?.greeting || 0 },
-    { name: "Phone Number", value: filteredDashboardData?.call_hygiene?.phone_number || 0 },
-    { name: "Email", value: filteredDashboardData?.call_hygiene?.email || 0 },
+    { name: "Greeting", value: dashboardData.call_hygiene.greeting },
+    { name: "Phone Number", value: dashboardData.call_hygiene.phone_number },
+    { name: "Email", value: dashboardData.call_hygiene.email },
   ]
 
   const toneConversationData = [
-    { name: "Positive", value: filteredDashboardData?.tone_conversation?.positive || 0 },
-    { name: "Negative", value: filteredDashboardData?.tone_conversation?.negative || 0 },
+    { name: "Positive", value: dashboardData.tone_conversation.positive },
+    { name: "Negative", value: dashboardData.tone_conversation.negative },
   ]
 
-  const eventTypeData = Object.entries(filteredDashboardData?.event_type || {}).map(([name, value]) => ({
+  const eventTypeData = Object.entries(dashboardData.event_type).map(([name, value]) => ({
     name,
     value,
   }))
 
   const customerServiceData = [
-    { name: "Parts Request", value: filteredDashboardData?.customer_service?.parts_request || 0 },
-    { name: "Digital Service", value: filteredDashboardData?.customer_service?.digital_service || 0 },
-    { name: "Field Visits", value: filteredDashboardData?.customer_service?.field_visits || 0 },
+    { name: "Parts Request", value: dashboardData.customer_service.parts_request },
+    { name: "Digital Service", value: dashboardData.customer_service.digital_service },
+    { name: "Field Visits", value: dashboardData.customer_service.field_visits },
   ]
 
-  const rootCauseAnalysis = filteredDashboardData?.root_cause_analysis
-    ? [
-      {
-        category: "Root Cause Analysis",
-        HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
-        ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
-        RouteTime: filteredDashboardData.root_cause_analysis.route_time,
-      },
-    ]
-    : []
+  const rootCauseAnalysis = [
+    {
+      category: "Root Cause Analysis",
+      HoldTime: dashboardData.root_cause_analysis.hold_time,
+      ResolutionTime: dashboardData.root_cause_analysis.resolution_time,
+      RouteTime: dashboardData.root_cause_analysis.route_time,
+    },
+  ]
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
@@ -749,6 +617,7 @@ const Dashboard: React.FC = () => {
           </Typography>
         </Box>
 
+        {/* Filters */}
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Box>
             <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
@@ -819,7 +688,7 @@ const Dashboard: React.FC = () => {
                   <MenuItem sx={{ fontSize: "12px" }} value="All">
                     All
                   </MenuItem>
-                  {Object.keys(filteredDashboardData?.event_type || {}).map((type) => (
+                  {Object.keys(dashboardData.event_type).map((type) => (
                     <MenuItem key={type} sx={{ fontSize: "12px" }} value={type}>
                       {type}
                     </MenuItem>
@@ -830,6 +699,7 @@ const Dashboard: React.FC = () => {
           </Box>
         </Box>
 
+        {/* KPI Cards */}
         <Grid
           container
           spacing={2}
@@ -838,7 +708,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Total Calls",
-              filteredDashboardData?.summary?.total_calls || 0,
+              dashboardData.summary.total_calls,
               "",
               <TtyOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -846,7 +716,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Call Routing Accuracy",
-              filteredData?.summary?.call_routing_accuracy || 0,
+              dashboardData.summary.call_routing_accuracy,
               "%",
               <AirlineStopsOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -854,15 +724,15 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Multiple Agents Invited",
-              filteredDashboardData?.summary?.multiple_agents || 0,
+              dashboardData.summary.multiple_agents,
               "%",
               <ConnectWithoutContactOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
           </Grid>
-          <Grid item sx={{ flex: "11 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+          <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Call Hold",
-              filteredDashboardData?.summary?.call_hold_percentage || 0,
+              dashboardData.summary.call_hold_percentage,
               "%",
               <PhonePausedOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -870,7 +740,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Escalated Calls",
-              filteredDashboardData?.summary?.escalated_calls || 0,
+              dashboardData.summary.escalated_calls,
               "%",
               <MoveUpOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -878,7 +748,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Resolution Confirmation",
-              filteredDashboardData?.summary?.resolution_confirmation || 0,
+              dashboardData.summary.resolution_confirmation,
               "%",
               <HowToRegOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -886,13 +756,14 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Digital Services Offered",
-              filteredDashboardData?.summary?.cs_portal_recommended || 0,
+              dashboardData.summary.cs_portal_recommended,
               "%",
               <TravelExploreOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
           </Grid>
         </Grid>
 
+        {/* Charts */}
         <Grid container spacing={2} sx={{ mt: 2 }}>
           {[
             { title: "Calls Complexity", data: callComplexityData, color: "#1877F2" },
@@ -913,6 +784,7 @@ const Dashboard: React.FC = () => {
           ))}
         </Grid>
 
+        {/* Data Table */}
         <TableContainer
           component={Paper}
           sx={{ boxShadow: 3, borderRadius: 2, maxWidth: "1090px", margin: "auto", mt: 4, overflowX: "auto" }}
@@ -937,26 +809,24 @@ const Dashboard: React.FC = () => {
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ) : filteredTableData.length === 0 ? (
+              ) : tableData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={columns.length} align="center">
                     No data available
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredTableData.map((row: any, index: number) => (
+                tableData.map((row: any, index: number) => (
                   <TableRow key={index} sx={{ "&:nth-of-type(odd)": { backgroundColor: "#f5f5f5" } }}>
                     {columns.map((column) => (
                       <DataTableCell key={`${index}-${column.key}`}>
                         {column.key === "transcript" ? (
                           <IconButton
-                            onClick={() => handleOpenTranscript(row.transcript, row.transcriptStatus, row.filename)}
+                            onClick={() => handleOpenTranscript(row.transcript, row.filename)}
                             disabled={!row.transcript}
                           >
                             <TextSnippet color={row.transcript ? "primary" : "disabled"} />
                           </IconButton>
-                        ) : column.key === "hold_time" || column.key === "route_time" ? (
-                          String(row[column.key] || "0")
                         ) : column.key === "call_quality" ? (
                           (() => {
                             const qualityValue = Number.parseFloat(String(row[column.key] || "0"))
@@ -977,6 +847,7 @@ const Dashboard: React.FC = () => {
           </Table>
         </TableContainer>
 
+        {/* Transcript Dialog */}
         <Dialog open={openTranscriptDialog} onClose={() => setOpenTranscriptDialog(false)} maxWidth="md" fullWidth>
           <DialogTitle>
             Transcript
@@ -1040,6 +911,7 @@ const Dashboard: React.FC = () => {
           </DialogActions>
         </Dialog>
 
+        {/* Alerts */}
         {alert.show && (
           <Alert sx={{ mt: 2 }} severity={alert.type as "error" | "info" | "success" | "warning"}>
             <AlertTitle>{alert.type === "error" ? "Error" : "Info"}</AlertTitle>

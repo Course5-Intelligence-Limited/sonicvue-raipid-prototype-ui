@@ -525,11 +525,6 @@ export default function AgentDashboard(): React.ReactElement {
                           }}
                         />
                       </TableCell>
-                      <TableCell sx={{ padding: "8px 12px" }}>
-                        <IconButton size="small">
-                          <MoreVertIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
