@@ -20,6 +20,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import axios from "axios"
 import { useUpload } from "../context/FileContext"
 import { AuthContext } from "../context/AuthContext"
+import { DashboardLoadingPopup } from "../components/PartsPopup"
 
 // Styled components
 const StyledSelect = styled(Select)({
@@ -102,15 +103,18 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [dashboardData, setDashboardData] = useState<PartsDispatchData | null>(null)
+  const [showLoadingPopup, setShowLoadingPopup] = useState<boolean>(false)
 
   // Get uploaded files from context and auth context
   const { files } = useUpload()
   const { getAuthToken } = useContext(AuthContext)
 
   // Demo files to use when no files are uploaded
-  const demoFiles = [
-    "final_record_10.mp3", "final_record_11.mp3", "final_record_3 2.mp3"
-  ]
+  const demoFiles = ["field_visit_1.mp3",
+    "parts_dispatch_1.mp3",
+    "call_efficiency_2.mp3",
+    "call_efficiency_1.mp3",
+    "call_efficiency_3.mp3"]
 
   // Get file list for request body
   const getFileList = () => {
@@ -118,10 +122,18 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
     return uploadedFiles.length > 0 ? uploadedFiles : demoFiles
   }
 
+  // Handle loading popup completion
+  const handleLoadingComplete = () => {
+    setShowLoadingPopup(false)
+  }
+
   // Fetch data from API
   const fetchData = async () => {
+    // Show popup when starting to fetch data
+    setShowLoadingPopup(true)
     setLoading(true)
     setError(null)
+
     try {
       const token = getAuthToken()
 
@@ -129,6 +141,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
       if (!token) {
         setError("Authentication token not found. Please log in again.")
         setLoading(false)
+        setShowLoadingPopup(false)
         return
       }
 
@@ -144,7 +157,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
 
       console.log("Sending request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8080/parts-dispatch", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/parts-dispatch", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -157,6 +170,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
       setDashboardData(response.data)
     } catch (err: any) {
       console.error("Error fetching parts dispatch data:", err)
+      setShowLoadingPopup(false) // Hide popup on error
       if (err.response) {
         setError(`Server error: ${err.response.status} - ${err.response.data?.message || err.response.statusText}`)
       } else if (err.request) {
@@ -166,6 +180,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
       }
     } finally {
       setLoading(false)
+      // Don't hide popup here - let the popup animation complete naturally
     }
   }
 
@@ -221,8 +236,8 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   const getPartsRequiredData = () => {
     if (!dashboardData) return []
     return [
-      { name: "Not Required", value: dashboardData.partsNotRequiredPercentage || 0 },
-      { name: "Required", value: dashboardData.partsRequiredPercentage || 0 },
+      { name: "Not Required", value: dashboardData.partsNotRequiredPercentage },
+      { name: "Required", value: dashboardData.partsRequiredPercentage },
     ]
   }
 
@@ -262,6 +277,9 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
+      {/* Show popup whenever we're fetching data */}
+      <DashboardLoadingPopup isOpen={showLoadingPopup} onComplete={handleLoadingComplete} />
+
       <Container maxWidth={false} sx={{ py: 2, px: 1, maxWidth: "100%", margin: "0 auto" }}>
         <Typography
           variant="h4"
@@ -335,7 +353,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
           </Alert>
         )}
 
-        {loading ? (
+        {loading && !showLoadingPopup ? (
           <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
             <CircularProgress sx={{ color: "#6C2BD9" }} />
           </Box>

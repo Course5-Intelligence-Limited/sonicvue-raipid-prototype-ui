@@ -11,6 +11,6 @@ RUN npm install --legacy-peer-deps
 RUN npm run build
  
 # Expose the port
-EXPOSE 3000 
+EXPOSE 3001 
 # Start the application
 CMD ["npm", "run", "start"]

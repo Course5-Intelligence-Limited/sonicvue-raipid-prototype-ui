@@ -170,7 +170,11 @@ export default function AgentDashboard(): React.ReactElement {
   const { files } = useUpload()
 
   // Default file list to use when no files are uploaded
-  const defaultFileList = ["final_record_10.mp3", "final_record_11.mp3", "final_record_3 2.mp3"]
+  const defaultFileList = ["field_visit_1.mp3",
+    "parts_dispatch_1.mp3",
+    "call_efficiency_2.mp3",
+    "call_efficiency_1.mp3",
+    "call_efficiency_3.mp3"]
 
   const fetchData = async (retryAfterRefresh = false): Promise<void> => {
     setLoading(true)
@@ -201,7 +205,7 @@ export default function AgentDashboard(): React.ReactElement {
 
       console.log("Request body:", requestBody) // Debug log
 
-      const response = await fetch("http://172.203.229.218:8080/agent-data", {
+      const response = await fetch("http://172.203.229.218:8082/agent-data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

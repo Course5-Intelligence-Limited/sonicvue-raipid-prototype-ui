@@ -127,7 +127,11 @@ export default function FieldVisitDashboard(): React.ReactElement {
 
   // Demo files to use when no files are uploaded
   const demoFiles = [
-    "final_record_10.mp3", "final_record_11.mp3", "final_record_3 2.mp3"
+    "field_visit_1.mp3",
+    "parts_dispatch_1.mp3",
+    "call_efficiency_2.mp3",
+    "call_efficiency_1.mp3",
+    "call_efficiency_3.mp3"
   ]
 
   // Get file list for request body
@@ -161,7 +165,7 @@ export default function FieldVisitDashboard(): React.ReactElement {
 
       console.log("Sending request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8080/field-visit", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/field-visit", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -295,16 +299,35 @@ export default function FieldVisitDashboard(): React.ReactElement {
     return ticks
   }
 
-  // Custom label renderer for pie chart
+  // Custom label renderer for pie chart with diagonal positioning
   const renderCustomizedLabel = (props: any) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props
-    const RADIAN = Math.PI / 180
-    const radius = outerRadius * 1.1
-    const x = cx + radius * Math.cos(-midAngle * RADIAN)
-    const y = cy + radius * Math.sin(-midAngle * RADIAN)
+    const { cx, cy, percent, name, index } = props
+    
+    // Position first label at top-left, second at bottom-right
+    const isFirstLabel = index === 0
+    const offsetDistance = 80 // Distance from chart center
+    
+    let x, y
+    if (isFirstLabel) {
+      // Top-left position
+      x = cx - offsetDistance
+      y = cy - offsetDistance
+    } else {
+      // Bottom-right position  
+      x = cx + offsetDistance
+      y = cy + offsetDistance
+    }
 
     return (
-      <text x={x} y={y} fill="#000000" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize="12px">
+      <text 
+        x={x} 
+        y={y} 
+        fill="#000000" 
+        textAnchor="middle" 
+        dominantBaseline="central" 
+        fontSize="11px"
+        fontWeight="500"
+      >
         {`${name} ${(percent * 100).toFixed(0)}%`}
       </text>
     )

@@ -189,11 +189,11 @@ const Dashboard: React.FC = () => {
 
   // Demo files to use when no files are uploaded
   const demoFiles = [
-    "final_record_5.mp3",
-    "final_record_4.mp3",
-    "final_record_3.mp3",
-    "final_record_2.mp3",
-    "final_record_1.mp3",
+    "field_visit_1.mp3",
+    "parts_dispatch_1.mp3",
+    "call_efficiency_2.mp3",
+    "call_efficiency_1.mp3",
+    "call_efficiency_3.mp3"
   ]
 
   // Get file list for request body
@@ -241,7 +241,7 @@ const Dashboard: React.FC = () => {
 
       console.log("Dashboard request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8080/dashboard-data", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/dashboard-data", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -281,7 +281,7 @@ const Dashboard: React.FC = () => {
 
       console.log("Table request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8080/table-data", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8082/table-data", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -604,7 +604,7 @@ const Dashboard: React.FC = () => {
     const callHoldPercentage =
       (data.reduce((sum, row) => sum + (Number.parseInt(row.hold_time?.toString() || "0") || 0), 0) /
         (data.length * 60)) *
-        100 || 0
+      100 || 0
     const escalatedCalls = (data.filter((row) => row.escalation === "Yes").length / data.length) * 100 || 0
     const resolutionConfirmation =
       (data.filter((row) => row.resolution_confirmation === "Yes").length / data.length) * 100 || 0
@@ -709,13 +709,13 @@ const Dashboard: React.FC = () => {
 
   const rootCauseAnalysis = filteredDashboardData?.root_cause_analysis
     ? [
-        {
-          category: "Root Cause Analysis",
-          HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
-          ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
-          RouteTime: filteredDashboardData.root_cause_analysis.route_time,
-        },
-      ]
+      {
+        category: "Root Cause Analysis",
+        HoldTime: filteredDashboardData.root_cause_analysis.hold_time,
+        ResolutionTime: filteredDashboardData.root_cause_analysis.resolution_time,
+        RouteTime: filteredDashboardData.root_cause_analysis.route_time,
+      },
+    ]
     : []
 
   return (
