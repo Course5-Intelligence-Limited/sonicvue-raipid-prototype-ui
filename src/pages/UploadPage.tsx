@@ -57,6 +57,15 @@ interface TranscriptResponse {
   status: "processing" | "completed" | "error"
 }
 
+interface DashboardDataStatus {
+  transcripts_ready: boolean
+  analytics_ready: boolean
+  call_quality_ready: boolean
+  agent_performance_ready: boolean
+  efficiency_metrics_ready: boolean
+  overall_ready: boolean
+}
+
 export default function UploadPage() {
   console.log("UploadPage is rendering")
   const location = useLocation()
@@ -64,6 +73,8 @@ export default function UploadPage() {
   const [openTranscriptDialog, setOpenTranscriptDialog] = useState(false)
   const [selectedTranscript, setSelectedTranscript] = useState("")
   const [loadingTranscripts, setLoadingTranscripts] = useState(false)
+  const [dashboardDataStatus, setDashboardDataStatus] = useState<DashboardDataStatus | null>(null)
+  const [checkingDashboardData, setCheckingDashboardData] = useState(false)
   const [open, setOpen] = useState(false)
   const [alert, setAlert] = useState<{ show: boolean; message: string; type: "success" | "error" | "info" }>({
     show: false,
@@ -84,6 +95,47 @@ export default function UploadPage() {
     console.log("UploadPage state updated:", { files, transcripts, filesUploaded, pathname: location.pathname })
   }, [files, transcripts, filesUploaded, location.pathname])
 
+  // Check dashboard data readiness when transcripts are generated
+  useEffect(() => {
+    if (transcripts.length > 0 && transcripts.every((t) => t.status === "completed")) {
+      checkDashboardDataReadiness()
+    }
+  }, [transcripts])
+
+  const checkDashboardDataReadiness = async () => {
+    try {
+      setCheckingDashboardData(true)
+      const uploadedFiles = files.filter((f) => f.status === "success").map((f) => f.file.name)
+
+      const response = await axios.post("http://172.203.229.218:8080/check-dashboard-readiness", {
+        file_list: uploadedFiles,
+      })
+
+      setDashboardDataStatus(response.data)
+
+      if (response.data.overall_ready) {
+        setAlert({
+          show: true,
+          message: "All dashboard data is ready! You can now access Call Analysis.",
+          type: "success",
+        })
+      }
+    } catch (error) {
+      console.error("Error checking dashboard data readiness:", error)
+      // If the API endpoint doesn't exist, we'll fall back to checking transcripts only
+      setDashboardDataStatus({
+        transcripts_ready: transcripts.length > 0 && transcripts.every((t) => t.status === "completed"),
+        analytics_ready: true, // Assume ready if API doesn't exist
+        call_quality_ready: true,
+        agent_performance_ready: true,
+        efficiency_metrics_ready: true,
+        overall_ready: transcripts.length > 0 && transcripts.every((t) => t.status === "completed"),
+      })
+    } finally {
+      setCheckingDashboardData(false)
+    }
+  }
+
   const showTranscript = (transcript: string) => {
     console.log("Showing transcript:", transcript)
     setSelectedTranscript(transcript)
@@ -92,7 +144,7 @@ export default function UploadPage() {
 
   // Check if File System Access API is supported
   const isFileSystemAccessSupported = () => {
-    return 'showSaveFilePicker' in window;
+    return "showSaveFilePicker" in window
   }
 
   // Updated function to download all transcripts as a zip file
@@ -107,7 +159,7 @@ export default function UploadPage() {
 
     try {
       const zipBlob = await zip.generateAsync({ type: "blob" })
-      
+
       // Try to use File System Access API first
       if (isFileSystemAccessSupported()) {
         try {
@@ -124,7 +176,7 @@ export default function UploadPage() {
           const writable = await handle.createWritable()
           await writable.write(zipBlob)
           await writable.close()
-          
+
           setAlert({
             show: true,
             message: "Transcripts saved successfully!",
@@ -136,21 +188,21 @@ export default function UploadPage() {
           console.log("File System Access API failed, falling back to standard download", err)
         }
       }
-      
+
       // Fallback to standard download if File System Access API is not supported or failed
       const url = URL.createObjectURL(zipBlob)
-      const a = document.createElement('a')
+      const a = document.createElement("a")
       a.href = url
       a.download = "transcripts.zip"
       document.body.appendChild(a)
       a.click()
-      
+
       // Clean up
       setTimeout(() => {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
       }, 100)
-      
+
       setAlert({
         show: true,
         message: "Transcripts downloaded to your default download folder",
@@ -170,8 +222,8 @@ export default function UploadPage() {
   const downloadTranscriptAsPdf2 = async (transcript: string, filename: string) => {
     try {
       // Create a Blob from the transcript text
-      const blob = new Blob([transcript], { type: 'text/plain' })
-      
+      const blob = new Blob([transcript], { type: "text/plain" })
+
       // Try to use File System Access API first
       if (isFileSystemAccessSupported()) {
         try {
@@ -188,7 +240,7 @@ export default function UploadPage() {
           const writable = await handle.createWritable()
           await writable.write(blob)
           await writable.close()
-          
+
           setAlert({
             show: true,
             message: "Transcript saved successfully!",
@@ -200,21 +252,21 @@ export default function UploadPage() {
           console.log("File System Access API failed, falling back to standard download", err)
         }
       }
-      
+
       // Fallback to standard download if File System Access API is not supported or failed
       const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
+      const a = document.createElement("a")
       a.href = url
       a.download = `${filename}.txt`
       document.body.appendChild(a)
       a.click()
-      
+
       // Clean up
       setTimeout(() => {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
       }, 100)
-      
+
       setAlert({
         show: true,
         message: "Transcript downloaded to your default download folder",
@@ -295,7 +347,7 @@ export default function UploadPage() {
     setFiles((prevFiles) => prevFiles.map((f) => (f.status === "Ready" ? { ...f, status: "uploading" } : f)))
 
     try {
-      const response = await axios.post("http://172.203.229.218:8082/upload", formData, {
+      const response = await axios.post("http://172.203.229.218:8080/upload", formData, {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
             const progress = (progressEvent.loaded / progressEvent.total) * 100
@@ -329,7 +381,7 @@ export default function UploadPage() {
     try {
       const uploadedFiles = files.filter((f) => f.status === "success").map((f) => f.file.name)
       setLoadingTranscripts(true)
-      const response = await axios.get("http://172.203.229.218:8082/generate-transcripts", {
+      const response = await axios.get("http://172.203.229.218:8080/generate-transcripts", {
         params: {
           files: uploadedFiles.join(","),
         },
@@ -349,6 +401,36 @@ export default function UploadPage() {
 
   const removeFile = (fileToRemove: File) => {
     setFiles((prevFiles) => prevFiles.filter((f) => f.file !== fileToRemove))
+  }
+
+  // Check if dashboard is ready for navigation
+  const isDashboardReady = () => {
+    return (
+      filesUploaded &&
+      transcripts.length > 0 &&
+      transcripts.every((t) => t.status === "completed") &&
+      !loadingTranscripts &&
+      !checkingDashboardData &&
+      !files.some((f) => f.status === "uploading" || f.status === "processing") &&
+      dashboardDataStatus?.overall_ready === true
+    )
+  }
+
+  const getDashboardButtonTooltip = () => {
+    if (!filesUploaded) return "Please upload files first"
+    if (transcripts.length === 0) return "Please generate transcripts first"
+    if (transcripts.some((t) => t.status === "processing")) return "Transcripts are still processing"
+    if (loadingTranscripts) return "Generating transcripts..."
+    if (checkingDashboardData) return "Preparing dashboard data..."
+    if (dashboardDataStatus && !dashboardDataStatus.overall_ready) {
+      const pendingItems = []
+      if (!dashboardDataStatus.analytics_ready) pendingItems.push("analytics")
+      if (!dashboardDataStatus.call_quality_ready) pendingItems.push("call quality metrics")
+      if (!dashboardDataStatus.agent_performance_ready) pendingItems.push("agent performance data")
+      if (!dashboardDataStatus.efficiency_metrics_ready) pendingItems.push("efficiency metrics")
+      return `Processing: ${pendingItems.join(", ")}`
+    }
+    return "Navigate to Call Analysis Dashboard"
   }
 
   return (
@@ -474,22 +556,82 @@ export default function UploadPage() {
             >
               {loadingTranscripts ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Generate Transcripts"}
             </Button>
-            <Button
-              component={Link}
-              to="/dashboard"
-              disabled={!filesUploaded}
-              sx={{
-                backgroundColor: filesUploaded ? "#0c0c0c" : "#A9A9A9",
-                height: "35px",
-                fontSize: "12px",
-                color: "white",
-                ":disabled": { backgroundColor: "#A9A9A9", color: "white" },
-              }}
-            >
-              <InsertChartOutlined sx={{ height: "16px", mr: 1 }} />
-              Call Analysis
-            </Button>
+            <Tooltip title={getDashboardButtonTooltip()} arrow>
+              <span>
+                <Button
+                  component={Link}
+                  to="/dashboard"
+                  disabled={!isDashboardReady()}
+                  sx={{
+                    backgroundColor: isDashboardReady() ? "#0c0c0c" : "#A9A9A9",
+                    height: "35px",
+                    fontSize: "12px",
+                    color: "white",
+                    ":disabled": { backgroundColor: "#A9A9A9", color: "white" },
+                    position: "relative",
+                  }}
+                >
+                  {checkingDashboardData ? (
+                    <CircularProgress size={16} sx={{ color: "#fff", mr: 1 }} />
+                  ) : (
+                    <InsertChartOutlined sx={{ height: "16px", mr: 1 }} />
+                  )}
+                  Call Analysis
+                </Button>
+              </span>
+            </Tooltip>
           </Box>
+
+          {/* Dashboard Data Status Indicator */}
+          {dashboardDataStatus && !dashboardDataStatus.overall_ready && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                Preparing Dashboard Data:
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {dashboardDataStatus.transcripts_ready ? (
+                    <Check sx={{ color: "green", fontSize: 16 }} />
+                  ) : (
+                    <CircularProgress size={16} />
+                  )}
+                  <Typography variant="body2">Transcripts</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {dashboardDataStatus.analytics_ready ? (
+                    <Check sx={{ color: "green", fontSize: 16 }} />
+                  ) : (
+                    <CircularProgress size={16} />
+                  )}
+                  <Typography variant="body2">Analytics Processing</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {dashboardDataStatus.call_quality_ready ? (
+                    <Check sx={{ color: "green", fontSize: 16 }} />
+                  ) : (
+                    <CircularProgress size={16} />
+                  )}
+                  <Typography variant="body2">Call Quality Metrics</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {dashboardDataStatus.agent_performance_ready ? (
+                    <Check sx={{ color: "green", fontSize: 16 }} />
+                  ) : (
+                    <CircularProgress size={16} />
+                  )}
+                  <Typography variant="body2">Agent Performance Data</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {dashboardDataStatus.efficiency_metrics_ready ? (
+                    <Check sx={{ color: "green", fontSize: 16 }} />
+                  ) : (
+                    <CircularProgress size={16} />
+                  )}
+                  <Typography variant="body2">Efficiency Metrics</Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
         </Box>
       )}
 

@@ -165,7 +165,7 @@ export default function FieldVisitDashboard(): React.ReactElement {
 
       console.log("Sending request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8082/field-visit", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8080/field-visit", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

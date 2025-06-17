@@ -181,6 +181,8 @@ const Dashboard: React.FC = () => {
   const { files } = useUpload()
   const { getAuthToken } = useContext(AuthContext)
 
+  const isDataLoading = loading || tableLoading
+
   const demoFiles = [
     "field_visit_1.mp3",
     "parts_dispatch_1.mp3",
@@ -202,6 +204,7 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
+
       const token = getAuthToken()
 
       if (!token) {
@@ -223,7 +226,7 @@ const Dashboard: React.FC = () => {
       if (complexity !== "All") requestBody.complexity = complexity === "Medium" ? "Intermediate" : complexity
       if (eventType !== "All") requestBody.eventType = eventType
 
-      const response = await axios.post("http://172.203.229.218:8082/dashboard-data", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8080/dashboard-data", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -236,6 +239,7 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
       setDashboardData(null)
+      setError("Failed to load dashboard data. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -256,7 +260,7 @@ const Dashboard: React.FC = () => {
         file_list: getFileList(),
       }
 
-      const response = await axios.post("http://172.203.229.218:8082/table-data", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8080/table-data", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -269,6 +273,7 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error("Error fetching table data:", error)
       setTableData([])
+      setError("Failed to load table data. Please try again.")
     } finally {
       setTableLoading(false)
     }
@@ -529,15 +534,8 @@ const Dashboard: React.FC = () => {
     )
   }
 
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-        <CircularProgress />
-      </Box>
-    )
-  }
-
-  if (!dashboardData) {
+  // Add null check before the return statement that renders the dashboard
+  if (!dashboardData && !loading && !tableLoading) {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">
@@ -548,43 +546,55 @@ const Dashboard: React.FC = () => {
     )
   }
 
-  // Prepare chart data from backend response
-  const callComplexityData = [
-    { name: "Easy", value: dashboardData.complexity.easy },
-    { name: "Medium", value: dashboardData.complexity.intermediate },
-    { name: "Difficult", value: dashboardData.complexity.difficult },
-  ]
+  // Prepare chart data from backend response with null checks
+  const callComplexityData = dashboardData
+    ? [
+        { name: "Easy", value: dashboardData.complexity.easy },
+        { name: "Medium", value: dashboardData.complexity.intermediate },
+        { name: "Difficult", value: dashboardData.complexity.difficult },
+      ]
+    : []
 
-  const callHygieneData = [
-    { name: "Greeting", value: dashboardData.call_hygiene.greeting },
-    { name: "Phone Number", value: dashboardData.call_hygiene.phone_number },
-    { name: "Email", value: dashboardData.call_hygiene.email },
-  ]
+  const callHygieneData = dashboardData
+    ? [
+        { name: "Greeting", value: dashboardData.call_hygiene.greeting },
+        { name: "Phone Number", value: dashboardData.call_hygiene.phone_number },
+        { name: "Email", value: dashboardData.call_hygiene.email },
+      ]
+    : []
 
-  const toneConversationData = [
-    { name: "Positive", value: dashboardData.tone_conversation.positive },
-    { name: "Negative", value: dashboardData.tone_conversation.negative },
-  ]
+  const toneConversationData = dashboardData
+    ? [
+        { name: "Positive", value: dashboardData.tone_conversation.positive },
+        { name: "Negative", value: dashboardData.tone_conversation.negative },
+      ]
+    : []
 
-  const eventTypeData = Object.entries(dashboardData.event_type).map(([name, value]) => ({
-    name,
-    value,
-  }))
+  const eventTypeData = dashboardData
+    ? Object.entries(dashboardData.event_type).map(([name, value]) => ({
+        name,
+        value,
+      }))
+    : []
 
-  const customerServiceData = [
-    { name: "Parts Request", value: dashboardData.customer_service.parts_request },
-    { name: "Digital Service", value: dashboardData.customer_service.digital_service },
-    { name: "Field Visits", value: dashboardData.customer_service.field_visits },
-  ]
+  const customerServiceData = dashboardData
+    ? [
+        { name: "Parts Request", value: dashboardData.customer_service.parts_request },
+        { name: "Digital Service", value: dashboardData.customer_service.digital_service },
+        { name: "Field Visits", value: dashboardData.customer_service.field_visits },
+      ]
+    : []
 
-  const rootCauseAnalysis = [
-    {
-      category: "Root Cause Analysis",
-      HoldTime: dashboardData.root_cause_analysis.hold_time,
-      ResolutionTime: dashboardData.root_cause_analysis.resolution_time,
-      RouteTime: dashboardData.root_cause_analysis.route_time,
-    },
-  ]
+  const rootCauseAnalysis = dashboardData
+    ? [
+        {
+          category: "Root Cause Analysis",
+          HoldTime: dashboardData.root_cause_analysis.hold_time,
+          ResolutionTime: dashboardData.root_cause_analysis.resolution_time,
+          RouteTime: dashboardData.root_cause_analysis.route_time,
+        },
+      ]
+    : []
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
@@ -688,11 +698,12 @@ const Dashboard: React.FC = () => {
                   <MenuItem sx={{ fontSize: "12px" }} value="All">
                     All
                   </MenuItem>
-                  {Object.keys(dashboardData.event_type).map((type) => (
-                    <MenuItem key={type} sx={{ fontSize: "12px" }} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
+                  {dashboardData &&
+                    Object.keys(dashboardData.event_type).map((type) => (
+                      <MenuItem key={type} sx={{ fontSize: "12px" }} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
             </Box>
@@ -708,7 +719,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Total Calls",
-              dashboardData.summary.total_calls,
+              dashboardData?.summary.total_calls || 0,
               "",
               <TtyOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -716,7 +727,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Call Routing Accuracy",
-              dashboardData.summary.call_routing_accuracy,
+              dashboardData?.summary.call_routing_accuracy || 0,
               "%",
               <AirlineStopsOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -724,7 +735,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Multiple Agents Invited",
-              dashboardData.summary.multiple_agents,
+              dashboardData?.summary.multiple_agents || 0,
               "%",
               <ConnectWithoutContactOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -732,7 +743,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Call Hold",
-              dashboardData.summary.call_hold_percentage,
+              dashboardData?.summary.call_hold_percentage || 0,
               "%",
               <PhonePausedOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -740,7 +751,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Escalated Calls",
-              dashboardData.summary.escalated_calls,
+              dashboardData?.summary.escalated_calls || 0,
               "%",
               <MoveUpOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -748,7 +759,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Resolution Confirmation",
-              dashboardData.summary.resolution_confirmation,
+              dashboardData?.summary.resolution_confirmation || 0,
               "%",
               <HowToRegOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -756,7 +767,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Digital Services Offered",
-              dashboardData.summary.cs_portal_recommended,
+              dashboardData?.summary.cs_portal_recommended || 0,
               "%",
               <TravelExploreOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}

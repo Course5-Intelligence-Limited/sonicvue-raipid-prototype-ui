@@ -104,6 +104,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   const [error, setError] = useState<string | null>(null)
   const [dashboardData, setDashboardData] = useState<PartsDispatchData | null>(null)
   const [showLoadingPopup, setShowLoadingPopup] = useState<boolean>(false)
+  const [isFirstLoad, setIsFirstLoad] = useState<boolean>(true)
 
   // Get uploaded files from context and auth context
   const { files } = useUpload()
@@ -125,12 +126,15 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
   // Handle loading popup completion
   const handleLoadingComplete = () => {
     setShowLoadingPopup(false)
+    setIsFirstLoad(false) // Ensure first load is marked as complete
   }
 
   // Fetch data from API
   const fetchData = async () => {
-    // Show popup when starting to fetch data
-    setShowLoadingPopup(true)
+    // Only show popup on first load
+    if (isFirstLoad) {
+      setShowLoadingPopup(true)
+    }
     setLoading(true)
     setError(null)
 
@@ -141,7 +145,9 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
       if (!token) {
         setError("Authentication token not found. Please log in again.")
         setLoading(false)
-        setShowLoadingPopup(false)
+        if (isFirstLoad) {
+          setShowLoadingPopup(false)
+        }
         return
       }
 
@@ -157,7 +163,7 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
 
       console.log("Sending request body:", requestBody)
 
-      const response = await axios.post("http://172.203.229.218:8082/parts-dispatch", requestBody, {
+      const response = await axios.post("http://172.203.229.218:8080/parts-dispatch", requestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -170,7 +176,9 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
       setDashboardData(response.data)
     } catch (err: any) {
       console.error("Error fetching parts dispatch data:", err)
-      setShowLoadingPopup(false) // Hide popup on error
+      if (isFirstLoad) {
+        setShowLoadingPopup(false) // Hide popup on error only if it was shown
+      }
       if (err.response) {
         setError(`Server error: ${err.response.status} - ${err.response.data?.message || err.response.statusText}`)
       } else if (err.request) {
@@ -180,6 +188,10 @@ export default function PartsDispatchedDashboard(): React.ReactElement {
       }
     } finally {
       setLoading(false)
+      // Mark first load as complete
+      if (isFirstLoad) {
+        setIsFirstLoad(false)
+      }
       // Don't hide popup here - let the popup animation complete naturally
     }
   }
