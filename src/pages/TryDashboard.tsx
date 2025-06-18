@@ -142,6 +142,23 @@ const DataTableCell = styled(TableCell)(({ theme }) => ({
   textOverflow: "ellipsis",
 }))
 
+// Utility function to safely convert values to numbers
+const safeNumber = (value: any): number => {
+  if (value === null || value === undefined) return 0
+  if (typeof value === "number") return isNaN(value) ? 0 : value
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value)
+    return isNaN(parsed) ? 0 : parsed
+  }
+  return 0
+}
+
+// Utility function to safely format numbers
+const formatNumber = (value: any, decimals = 0): string => {
+  const num = safeNumber(value)
+  return num.toFixed(decimals)
+}
+
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, fill }: any) => {
   const RADIAN = Math.PI / 180
   const radius = outerRadius * 1.2
@@ -157,7 +174,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
     <g>
       <line x1={lineX1} y1={lineY1} x2={lineX2} y2={lineY2} stroke={fill} strokeWidth={1} />
       <text x={x} y={y} fill={fill} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize="12px">
-        {`${name} ${(percent * 100).toFixed(0)}%`}
+        {`${name} ${formatNumber(percent * 100, 0)}%`}
       </text>
     </g>
   )
@@ -181,7 +198,8 @@ const Dashboard: React.FC = () => {
   const { files } = useUpload()
   const { getAuthToken } = useContext(AuthContext)
 
-  const isDataLoading = loading || tableLoading
+  // Check if all data is loaded
+  const isAllDataLoaded = !loading && !tableLoading && dashboardData !== null
 
   const demoFiles = [
     "field_visit_1.mp3",
@@ -204,6 +222,7 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
+      setError(null)
 
       const token = getAuthToken()
 
@@ -248,6 +267,7 @@ const Dashboard: React.FC = () => {
   const fetchTableData = async () => {
     setTableLoading(true)
     try {
+      setError(null)
       const token = getAuthToken()
 
       if (!token) {
@@ -416,12 +436,13 @@ const Dashboard: React.FC = () => {
     },
   ]
 
-  const renderKPI = (title: string, value: number, unit = "", icon: React.ReactNode) => (
+  // Safe KPI rendering with proper error handling
+  const renderKPI = (title: string, value: any, unit = "", icon: React.ReactNode) => (
     <Paper elevation={3} sx={{ p: 2, textAlign: "center", height: "100%" }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "start", gap: "28px" }}>
         {icon}
         <Typography sx={{ fontSize: "20px" }} variant="h6">
-          {value?.toFixed(0) || 0}
+          {formatNumber(value, 0)}
           {unit}
         </Typography>
       </Box>
@@ -443,6 +464,12 @@ const Dashboard: React.FC = () => {
       applyFilter(title, entry.name)
     }
 
+    // Ensure data is valid and has numeric values
+    const safeData = data.map((item) => ({
+      ...item,
+      value: safeNumber(item.value),
+    }))
+
     return (
       <Paper sx={{ p: 1.5 }}>
         <Typography variant="subtitle1" sx={{ fontSize: "14px", textAlign: "center", mb: 1 }}>
@@ -460,7 +487,7 @@ const Dashboard: React.FC = () => {
           {chartType === "Pie" ? (
             <PieChart>
               <Pie
-                data={data}
+                data={safeData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -472,7 +499,7 @@ const Dashboard: React.FC = () => {
                 cursor="pointer"
                 label={renderCustomizedLabel}
               >
-                {data.map((entry, index) => (
+                {safeData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
@@ -483,7 +510,7 @@ const Dashboard: React.FC = () => {
               <Tooltip />
             </PieChart>
           ) : chartType === "StackedBar" ? (
-            <BarChart width={500} height={300} data={data} layout="vertical" barSize={40} barCategoryGap="15%">
+            <BarChart width={500} height={300} data={safeData} layout="vertical" barSize={40} barCategoryGap="15%">
               <XAxis type="number" tick={{ fontSize: 10 }} />
               <YAxis type="category" dataKey="category" tick={{ fontSize: 10 }} />
               <Tooltip
@@ -514,12 +541,12 @@ const Dashboard: React.FC = () => {
               />
             </BarChart>
           ) : (
-            <BarChart data={data}>
+            <BarChart data={safeData}>
               <XAxis dataKey="name" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip />
               <Bar dataKey="value" barSize={40} onClick={(entry) => handleChartClick(entry)} cursor="pointer">
-                {data.map((entry, index) => (
+                {safeData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={chartColors[index % chartColors.length]}
@@ -534,54 +561,97 @@ const Dashboard: React.FC = () => {
     )
   }
 
-  // Add null check before the return statement that renders the dashboard
-  if (!dashboardData && !loading && !tableLoading) {
+  // Show loading screen until all data is ready
+  if (loading || tableLoading) {
     return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          Failed to load dashboard data. Please try again.
-        </Alert>
+      <Box
+        sx={{
+          bgcolor: "#f8f9fa",
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress size={60} sx={{ color: "#6800E0", mb: 3 }} />
+        <Typography variant="h6" sx={{ color: "#6800E0", mb: 1 }}>
+          Loading Dashboard Data...
+        </Typography>
+        <Typography variant="body2" sx={{ color: "#666" }}>
+          {loading && tableLoading
+            ? "Loading dashboard and table data..."
+            : loading
+              ? "Loading dashboard data..."
+              : "Loading table data..."}
+        </Typography>
       </Box>
     )
   }
 
-  // Prepare chart data from backend response with null checks
+  // Show error state if data failed to load
+  if (error && !dashboardData) {
+    return (
+      <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh", p: 4 }}>
+        <Container maxWidth="md">
+          <Alert severity="error" sx={{ mt: 4 }}>
+            <AlertTitle>Error Loading Dashboard</AlertTitle>
+            {error}
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  fetchDashboardData()
+                  fetchTableData()
+                }}
+                sx={{ mr: 2 }}
+              >
+                Retry
+              </Button>
+            </Box>
+          </Alert>
+        </Container>
+      </Box>
+    )
+  }
+
+  // Prepare chart data from backend response with safe number conversion
   const callComplexityData = dashboardData
     ? [
-        { name: "Easy", value: dashboardData.complexity.easy },
-        { name: "Medium", value: dashboardData.complexity.intermediate },
-        { name: "Difficult", value: dashboardData.complexity.difficult },
+        { name: "Easy", value: safeNumber(dashboardData.complexity?.easy) },
+        { name: "Medium", value: safeNumber(dashboardData.complexity?.intermediate) },
+        { name: "Difficult", value: safeNumber(dashboardData.complexity?.difficult) },
       ]
     : []
 
   const callHygieneData = dashboardData
     ? [
-        { name: "Greeting", value: dashboardData.call_hygiene.greeting },
-        { name: "Phone Number", value: dashboardData.call_hygiene.phone_number },
-        { name: "Email", value: dashboardData.call_hygiene.email },
+        { name: "Greeting", value: safeNumber(dashboardData.call_hygiene?.greeting) },
+        { name: "Phone Number", value: safeNumber(dashboardData.call_hygiene?.phone_number) },
+        { name: "Email", value: safeNumber(dashboardData.call_hygiene?.email) },
       ]
     : []
 
   const toneConversationData = dashboardData
     ? [
-        { name: "Positive", value: dashboardData.tone_conversation.positive },
-        { name: "Negative", value: dashboardData.tone_conversation.negative },
+        { name: "Positive", value: safeNumber(dashboardData.tone_conversation?.positive) },
+        { name: "Negative", value: safeNumber(dashboardData.tone_conversation?.negative) },
       ]
     : []
 
-  const eventTypeData = dashboardData
-    ? Object.entries(dashboardData.event_type).map(([name, value]) => ({
-        name,
-        value,
-      }))
-    : []
+  const eventTypeData =
+    dashboardData && dashboardData.event_type
+      ? Object.entries(dashboardData.event_type).map(([name, value]) => ({
+          name,
+          value: safeNumber(value),
+        }))
+      : []
 
   const customerServiceData = dashboardData
     ? [
-        { name: "Parts Request", value: dashboardData.customer_service.parts_request },
-        { name: "Digital Service", value: dashboardData.customer_service.digital_service },
-        { name: "Field Visits", value: dashboardData.customer_service.field_visits },
+        { name: "Parts Request", value: safeNumber(dashboardData.customer_service?.parts_request) },
+        { name: "Digital Service", value: safeNumber(dashboardData.customer_service?.digital_service) },
+        { name: "Field Visits", value: safeNumber(dashboardData.customer_service?.field_visits) },
       ]
     : []
 
@@ -589,9 +659,9 @@ const Dashboard: React.FC = () => {
     ? [
         {
           category: "Root Cause Analysis",
-          HoldTime: dashboardData.root_cause_analysis.hold_time,
-          ResolutionTime: dashboardData.root_cause_analysis.resolution_time,
-          RouteTime: dashboardData.root_cause_analysis.route_time,
+          HoldTime: safeNumber(dashboardData.root_cause_analysis?.hold_time),
+          ResolutionTime: safeNumber(dashboardData.root_cause_analysis?.resolution_time),
+          RouteTime: safeNumber(dashboardData.root_cause_analysis?.route_time),
         },
       ]
     : []
@@ -699,6 +769,7 @@ const Dashboard: React.FC = () => {
                     All
                   </MenuItem>
                   {dashboardData &&
+                    dashboardData.event_type &&
                     Object.keys(dashboardData.event_type).map((type) => (
                       <MenuItem key={type} sx={{ fontSize: "12px" }} value={type}>
                         {type}
@@ -719,7 +790,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Total Calls",
-              dashboardData?.summary.total_calls || 0,
+              dashboardData?.summary?.total_calls,
               "",
               <TtyOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -727,7 +798,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Call Routing Accuracy",
-              dashboardData?.summary.call_routing_accuracy || 0,
+              dashboardData?.summary?.call_routing_accuracy,
               "%",
               <AirlineStopsOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -735,7 +806,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Multiple Agents Invited",
-              dashboardData?.summary.multiple_agents || 0,
+              dashboardData?.summary?.multiple_agents,
               "%",
               <ConnectWithoutContactOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -743,7 +814,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Call Hold",
-              dashboardData?.summary.call_hold_percentage || 0,
+              dashboardData?.summary?.call_hold_percentage,
               "%",
               <PhonePausedOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -751,7 +822,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Escalated Calls",
-              dashboardData?.summary.escalated_calls || 0,
+              dashboardData?.summary?.escalated_calls,
               "%",
               <MoveUpOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -759,7 +830,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Resolution Confirmation",
-              dashboardData?.summary.resolution_confirmation || 0,
+              dashboardData?.summary?.resolution_confirmation,
               "%",
               <HowToRegOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -767,7 +838,7 @@ const Dashboard: React.FC = () => {
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
             {renderKPI(
               "Digital Services Offered",
-              dashboardData?.summary.cs_portal_recommended || 0,
+              dashboardData?.summary?.cs_portal_recommended,
               "%",
               <TravelExploreOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
@@ -814,13 +885,7 @@ const Dashboard: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {tableLoading ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} align="center">
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              ) : tableData.length === 0 ? (
+              {tableData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={columns.length} align="center">
                     No data available
@@ -840,7 +905,7 @@ const Dashboard: React.FC = () => {
                           </IconButton>
                         ) : column.key === "call_quality" ? (
                           (() => {
-                            const qualityValue = Number.parseFloat(String(row[column.key] || "0"))
+                            const qualityValue = safeNumber(row[column.key])
                             const wholeNumber = Math.round(qualityValue)
                             if (qualityValue === 100) return `${wholeNumber}% Good`
                             if (qualityValue >= 55.55) return `${wholeNumber}% Can be improved`
