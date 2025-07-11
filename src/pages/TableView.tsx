@@ -478,7 +478,7 @@ const TableData: React.FC = () => {
                                                 <TextSnippet color={row.transcriptStatus === 'completed' ? 'primary' : 'disabled'} />
                                             </IconButton>
                                         ) : (
-                                            String(row[column.key] || '')
+                                            String(row[column.key] || '0')
                                         )}
                                     </DataTableCell>
                                 ))}

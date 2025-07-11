@@ -36,6 +36,7 @@ import TtyOutlinedIcon from "@mui/icons-material/TtyOutlined"
 import AirlineStopsOutlinedIcon from "@mui/icons-material/AirlineStopsOutlined"
 import ConnectWithoutContactOutlinedIcon from "@mui/icons-material/ConnectWithoutContactOutlined"
 import PhonePausedOutlinedIcon from "@mui/icons-material/PhonePausedOutlined"
+import AccessTimeSharpIcon from '@mui/icons-material/AccessTimeSharp';
 import MoveUpOutlinedIcon from "@mui/icons-material/MoveUpOutlined"
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined"
 import TravelExploreOutlinedIcon from "@mui/icons-material/TravelExploreOutlined"
@@ -51,6 +52,7 @@ interface DashboardData {
     call_routing_accuracy: number
     multiple_agents: number
     call_hold_percentage: number
+    call_hold_time: number
     escalated_calls: number
     resolution_confirmation: number
     cs_portal_recommended: number
@@ -76,6 +78,8 @@ interface DashboardData {
     hold_time: number
     resolution_time: number
     route_time: number
+    call_time : number
+    other_time : number
   }
   customer_service: {
     parts_request: number
@@ -459,17 +463,43 @@ const Dashboard: React.FC = () => {
     colors?: string[]
   }) => {
     const { title, data, chartType = "Bar", colors: chartColors = colors } = chartConfig
-
+  
     const handleChartClick = (entry: any) => {
       applyFilter(title, entry.name)
     }
+  
+    // Custom tooltip for percentage-based charts
+    const CustomTooltip = ({ active, payload, label }: any) => {
+      if (active && payload && payload.length) {
+        return (
+          <div
+            style={{
+              backgroundColor: "#fff",
+              padding: "8px",
+              border: "1px solid #ccc",
+              fontSize: "15px",
+              lineHeight: 1.5,
+              borderRadius: "4px",
+              boxShadow: "0 0 5px rgba(0,0,0,0.1)",
+            }}
+          >
+            <div>{label}</div>
+            <div>{`percentage : ${payload[0].value}`}</div>
+          </div>
+        )
+      }
+      return null
+    }    
 
-    // Ensure data is valid and has numeric values
+    // Titles of charts that should use "percentage" in tooltips
+    const percentageCharts = ["Call Hygiene", "Customer Service"] // <-- replace with your actual chart titles
+    const isPercentageChart = percentageCharts.includes(title)
+  
     const safeData = data.map((item) => ({
       ...item,
       value: safeNumber(item.value),
     }))
-
+  
     return (
       <Paper sx={{ p: 1.5 }}>
         <Typography variant="subtitle1" sx={{ fontSize: "14px", textAlign: "center", mb: 1 }}>
@@ -511,7 +541,14 @@ const Dashboard: React.FC = () => {
             </PieChart>
           ) : chartType === "StackedBar" ? (
             <BarChart width={500} height={300} data={safeData} layout="vertical" barSize={40} barCategoryGap="15%">
-              <XAxis type="number" tick={{ fontSize: 10 }} />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 10 }}
+                domain={[0, () => {
+                  const maxCallTime = Math.max(...safeData.map((d) => safeNumber(d.CallTime)))
+                  return Math.ceil(maxCallTime * 1.1) // 10% padding
+                }]}
+              />
               <YAxis type="category" dataKey="category" tick={{ fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ fontSize: "8px", padding: "4px", lineHeight: "1" }}
@@ -539,12 +576,19 @@ const Dashboard: React.FC = () => {
                 cursor="pointer"
                 onClick={(entry) => handleChartClick(entry)}
               />
+              <Bar
+                dataKey="OtherTime"
+                stackId="a"
+                fill={chartColors[3] || "#D8BFD8"}
+                cursor="pointer"
+                onClick={(entry) => handleChartClick(entry)}
+              />
             </BarChart>
           ) : (
             <BarChart data={safeData}>
               <XAxis dataKey="name" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip />
+              <Tooltip content={isPercentageChart ? <CustomTooltip /> : undefined} />
               <Bar dataKey="value" barSize={40} onClick={(entry) => handleChartClick(entry)} cursor="pointer">
                 {safeData.map((entry, index) => (
                   <Cell
@@ -559,7 +603,7 @@ const Dashboard: React.FC = () => {
         </ResponsiveContainer>
       </Paper>
     )
-  }
+  }  
 
   // Show loading screen until all data is ready
   if (loading || tableLoading) {
@@ -662,6 +706,8 @@ const Dashboard: React.FC = () => {
           HoldTime: safeNumber(dashboardData.root_cause_analysis?.hold_time),
           ResolutionTime: safeNumber(dashboardData.root_cause_analysis?.resolution_time),
           RouteTime: safeNumber(dashboardData.root_cause_analysis?.route_time),
+          CallTime: safeNumber(dashboardData.root_cause_analysis?.call_time),
+          OtherTime: safeNumber(dashboardData.root_cause_analysis?.other_time),
         },
       ]
     : []
@@ -817,6 +863,14 @@ const Dashboard: React.FC = () => {
               dashboardData?.summary?.call_hold_percentage,
               "%",
               <PhonePausedOutlinedIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
+            )}
+          </Grid>
+          <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
+            {renderKPI(
+              "Hold Time",
+              dashboardData?.summary?.call_hold_time,
+              " s",
+              <AccessTimeSharpIcon sx={{ fontSize: 20, color: "#8c51e1" }} />,
             )}
           </Grid>
           <Grid item sx={{ flex: "1 1 auto", textAlign: "center", minWidth: "150px", maxWidth: "150px" }}>
