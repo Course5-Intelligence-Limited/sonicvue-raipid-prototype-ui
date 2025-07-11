@@ -966,7 +966,7 @@ const Dashboard: React.FC = () => {
                             return `${wholeNumber}% Poor`
                           })()
                         ) : (
-                          String(row[column.key] || "")
+                          (row[column.key] !== undefined && row[column.key] !== null && row[column.key] !== "") ? String(row[column.key]) : "0"
                         )}
                       </DataTableCell>
                     ))}
