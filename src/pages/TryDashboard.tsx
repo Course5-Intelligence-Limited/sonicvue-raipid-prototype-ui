@@ -546,13 +546,13 @@ const Dashboard: React.FC = () => {
                 tick={{ fontSize: 10 }}
                 domain={[0, () => {
                   const maxCallTime = Math.max(...safeData.map((d) => safeNumber(d.CallTime)))
-                  return Math.ceil(maxCallTime * 1.1) // 10% padding
+                  return Math.ceil(maxCallTime) // 10% padding
                 }]}
               />
               <YAxis type="category" dataKey="category" tick={{ fontSize: 10 }} />
               <Tooltip
-                contentStyle={{ fontSize: "8px", padding: "4px", lineHeight: "1" }}
-                itemStyle={{ fontSize: "8px", margin: "0" }}
+                contentStyle={{ fontSize: "12px", padding: "4px", lineHeight: "1" }}
+                itemStyle={{ fontSize: "10px", margin: "0" }}
               />
               <Legend wrapperStyle={{ fontSize: "10px" }} />
               <Bar
